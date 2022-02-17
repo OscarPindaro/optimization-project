@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import completeness_score
 
 
 def label_dataset(dataset, n_clusters, cluster_alg, alg_parameters, sample_weight):
@@ -30,11 +31,55 @@ def label_dataset(dataset, n_clusters, cluster_alg, alg_parameters, sample_weigh
     return estimator
 
 
-def find_best_estimator(estimator_list, metric, real_labels, maximize=True):
+def find_best_estimator(estimator_list, metric, true_labels, maximize=True):
     scores = []
     for estimator in estimator_list:
-        scores.append(metric(real_labels, estimator.labels_))
+        scores.append(metric(true_labels, estimator.labels_))
     return estimator_list[np.argmax(scores)]
 
-def assign_clusters_to_leaf():
+
+def assign_clusters_to_leaves(n_leaves, true_labels, estimated_labels):
+    leaves = list(range(n_leaves))
+    stack = []
+    done = False
+    while not done:
+        copy_leaves = list(leaves)
+
+
+def recursive_best_completeness(couples, remaining_clusters, estimated_labels, true_labels):
+    # no more clusters to couple
+    if len(remaining_clusters) == 0:
+        estimated_labels = np.array(estimated_labels)
+        curr_couple = 0
+        for couple in couples:
+            estimated_labels[estimated_labels == couple[0]] = curr_couple
+            estimated_labels[estimated_labels == couple[1]] = curr_couple
+            curr_couple += 1
+        #print(estimated_labels[0:10])
+        print(np.unique(estimated_labels))
+        score = completeness_score(estimated_labels, true_labels)
+        print(couples, score)
+        return couples, score
+    # still need to assign a cluster
+    best_assignment = []
+    best_score = 0
+    for i in range(1, len(remaining_clusters)):
+        new_couple = [remaining_clusters[0], remaining_clusters[i]]
+        new_remaining_clusters = list(remaining_clusters)
+        new_remaining_clusters.remove(remaining_clusters[0])
+        new_remaining_clusters.remove(remaining_clusters[i])
+        new_couples = list(couples)
+        new_couples.append(new_couple)
+        res_couples, score = recursive_best_completeness(new_couples,
+                                                         new_remaining_clusters,
+                                                         estimated_labels=estimated_labels,
+                                                         true_labels=true_labels)
+        # print(res_couples, score)
+        if score >= best_score:
+            best_assignment = res_couples
+            best_score = score
+    return best_assignment, best_score
+
+
+if __name__ == "__main__":
     pass
