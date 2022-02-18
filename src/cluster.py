@@ -74,10 +74,12 @@ def best_leaf_assignment(n_leaves, estimated_labels, true_labels, metric, metric
             for couple in assignment:
                 new_to_return.append(to_return[couple[0]] + to_return[couple[1]])
             to_return = new_to_return
-        # now assign reassign labels
+        # now assign reassign labels, deepcopy to avoid errors while assigning values
+        copy_estimated_labels = np.copy(estimated_labels)
         for i in range(len(to_return)):
             for cluster_index in to_return[i]:
-                estimated_labels[estimated_labels == cluster_index] = i
+                copy_estimated_labels[estimated_labels == cluster_index] = i
+        estimated_labels = copy_estimated_labels
         n_active_clusters = len(to_return)
         clusters = list(range(n_active_clusters))
         n_runs += 1
@@ -92,16 +94,14 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
     if metric_params is None:
         metric_params = {}
     if len(remaining_clusters) == 0:
-        # TODO questa riga da dei problemi se 0 o 1 si trovano come valore della coppia, setta
-        # TODO tutti i valori di una classe come l'altra, detto molto male
-        estimated_labels = np.array(estimated_labels)
+        copy_estimated_labels = np.copy(estimated_labels)
         curr_couple = 0
         for couple in couples:
-            estimated_labels[estimated_labels == couple[0]] = curr_couple
-            estimated_labels[estimated_labels == couple[1]] = curr_couple
+            copy_estimated_labels[estimated_labels == couple[0]] = curr_couple
+            copy_estimated_labels[estimated_labels == couple[1]] = curr_couple
             curr_couple += 1
         # print(estimated_labels[0:10])
-        score = metric(estimated_labels, true_labels, **metric_params)
+        score = metric(copy_estimated_labels, true_labels, **metric_params)
         # print(couples, score)
         return couples, score
     # still need to assign a cluster
@@ -211,11 +211,10 @@ if __name__ == "__main__":
 
     estimator = find_best_estimator(clustering_estimators, completeness_score, y)
     print("The best estimate is {}".format(estimator))
-    print(best_leaf_assignment(4, estimator.labels_, true_values, completeness_score))
-
+    print("best estimator",best_leaf_assignment(4, estimator.labels_, true_values, completeness_score))
+    print("true value",best_leaf_assignment(4, true_values, true_values, completeness_score))
     print(estimator.labels_)
     n_leaves = 8
     roba = HierarchicalLogistic(n_leaves)
     ass, score = best_leaf_assignment(n_leaves, estimator.labels_, true_values, completeness_score)
     res = roba.fit([],[], ass)
-    print(res, len(res))
