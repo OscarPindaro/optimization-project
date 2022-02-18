@@ -123,13 +123,31 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
     return best_assignment, best_score
 
 
-def HierarchicalLogistic():
-    def __init__(n_leaves):
-        tree_height = int(math.ceil(math.log(x=n_leaves, base=2)))
-        n_logistics = 2 ** tree_height - 1
-        classifiers = []
+class HierarchicalLogistic:
+    def __init__(self, n_leaves):
+        # in a binary tree with n_leaves, the number of branching nodes is n_leaves - 1
+        self.n_leaves = n_leaves
+        n_logistics = n_leaves - 1
+        self.classifiers = []
         for i in range(n_logistics):
-            classifiers.append(LogisticRegression())
+            self.classifiers.append(LogisticRegression())
+
+    def fit(self, x, y, leaves_assignment):
+        cluster_dimension = self.n_leaves // 2
+        n_of_adds = 1
+        cluster_association = []
+        while cluster_dimension > 0:
+            i = 0
+            while i < 2*n_of_adds:
+                start = i * cluster_dimension
+                mid = i * cluster_dimension + cluster_dimension
+                end = i * cluster_dimension + 2 * cluster_dimension
+                print(start, mid, end)
+                cluster_association.append([leaves_assignment[start:mid], leaves_assignment[mid:end]])
+                i += 2
+            n_of_adds *= 2
+            cluster_dimension = cluster_dimension // 2
+        return cluster_association
 
 
 if __name__ == "__main__":
@@ -181,4 +199,10 @@ if __name__ == "__main__":
     estimator = find_best_estimator(clustering_estimators, completeness_score, y)
     print("The best estimate is {}".format(estimator))
     print(best_leaf_assignment(4, estimator.labels_, true_values, completeness_score))
+
     print(estimator.labels_)
+    n_leaves = 8
+    roba = HierarchicalLogistic(n_leaves)
+    ass, score = best_leaf_assignment(n_leaves, estimator.labels_, true_values, completeness_score)
+    res = roba.fit([],[], ass)
+    print(res, len(res))
