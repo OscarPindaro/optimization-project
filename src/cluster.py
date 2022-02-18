@@ -126,23 +126,36 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
 
 
 class HierarchicalLogistic:
-    def __init__(self, n_leaves):
+    def __init__(self, n_leaves, random_state):
         # in a binary tree with n_leaves, the number of branching nodes is n_leaves - 1
         self.n_leaves = n_leaves
         n_logistics = n_leaves - 1
         self.classifiers = []
+        self.leaf_class = []
         for i in range(n_logistics):
-            self.classifiers.append(LogisticRegression())
+            self.classifiers.append(LogisticRegression(random_state=random_state+i))
 
     def fit(self, x, y, leaves_assignment):
         logistic_clusters = self.get_regressor_clusters(leaves_assignment)
-        for reg, clust in zip(self.classifiers, logistic_clusters):
-            x_copy = np.copy(x) # deep copy
-            y_copy = np.copy(x) # deep copy
-            # questa operazione è bella rischiosina
-            print(clust[0], clust[1])
-
-
+        trained_classifiers = []
+        for classifier, clust_couple in zip(self.classifiers, logistic_clusters):
+            # filter the samples that are considered by the current clusters
+            x_cluster_samples = []
+            y_cluster_samples = []
+            for cluster_number in clust_couple[0] + clust_couple[1]:
+                # this filtering should have no need of deep copying
+                x_cluster_samples.append(x[y == cluster_number])
+                y_cluster_samples.append(y[y == cluster_number])
+            x_filtered = np.concatenate(x_cluster_samples)
+            y_filtered = np.concatenate(y_cluster_samples)
+            copy_y_filtered = np.copy(y_filtered)  # deep copy in order to assign target values
+            # assign target values
+            for i in range(len(clust_couple)):
+                for cluster_value in clust_couple[i]:
+                    y_filtered[copy_y_filtered == cluster_value] = i
+            classifier = classifier.fit(x_filtered, y_filtered)
+            trained_classifiers.append(classifier)
+        self.classifiers = trained_classifiers
 
     def get_regressor_clusters(self, leaves_assignment):
         cluster_dimension = self.n_leaves // 2
@@ -150,7 +163,7 @@ class HierarchicalLogistic:
         cluster_association = []
         while cluster_dimension > 0:
             i = 0
-            while i < 2*n_of_adds:
+            while i < 2 * n_of_adds:
                 start = i * cluster_dimension
                 mid = i * cluster_dimension + cluster_dimension
                 end = i * cluster_dimension + 2 * cluster_dimension
@@ -160,7 +173,6 @@ class HierarchicalLogistic:
             n_of_adds *= 2
             cluster_dimension = cluster_dimension // 2
         return cluster_association
-
 
 
 if __name__ == "__main__":
@@ -211,10 +223,10 @@ if __name__ == "__main__":
 
     estimator = find_best_estimator(clustering_estimators, completeness_score, y)
     print("The best estimate is {}".format(estimator))
-    print("best estimator",best_leaf_assignment(4, estimator.labels_, true_values, completeness_score))
-    print("true value",best_leaf_assignment(4, true_values, true_values, completeness_score))
+    print("best estimator", best_leaf_assignment(4, estimator.labels_, true_values, completeness_score))
+    print("true value", best_leaf_assignment(4, true_values, true_values, completeness_score))
     print(estimator.labels_)
-    n_leaves = 8
-    roba = HierarchicalLogistic(n_leaves)
+    n_leaves = 4
+    roba = HierarchicalLogistic(n_leaves, 0)
     ass, score = best_leaf_assignment(n_leaves, estimator.labels_, true_values, completeness_score)
-    res = roba.fit([],[], ass)
+    roba.fit(X, y, ass)
