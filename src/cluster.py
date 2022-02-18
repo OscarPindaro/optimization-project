@@ -92,6 +92,8 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
     if metric_params is None:
         metric_params = {}
     if len(remaining_clusters) == 0:
+        # TODO questa riga da dei problemi se 0 o 1 si trovano come valore della coppia, setta
+        # TODO tutti i valori di una classe come l'altra, detto molto male
         estimated_labels = np.array(estimated_labels)
         curr_couple = 0
         for couple in couples:
@@ -133,6 +135,16 @@ class HierarchicalLogistic:
             self.classifiers.append(LogisticRegression())
 
     def fit(self, x, y, leaves_assignment):
+        logistic_clusters = self.get_regressor_clusters(leaves_assignment)
+        for reg, clust in zip(self.classifiers, logistic_clusters):
+            x_copy = np.copy(x) # deep copy
+            y_copy = np.copy(x) # deep copy
+            # questa operazione è bella rischiosina
+            print(clust[0], clust[1])
+
+
+
+    def get_regressor_clusters(self, leaves_assignment):
         cluster_dimension = self.n_leaves // 2
         n_of_adds = 1
         cluster_association = []
@@ -148,6 +160,7 @@ class HierarchicalLogistic:
             n_of_adds *= 2
             cluster_dimension = cluster_dimension // 2
         return cluster_association
+
 
 
 if __name__ == "__main__":
