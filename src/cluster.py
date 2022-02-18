@@ -11,6 +11,8 @@ from sklearn.metrics import rand_score, adjusted_rand_score, homogeneity_score, 
 from sklearn.linear_model import LogisticRegression
 import math
 
+from sklearn.preprocessing import StandardScaler
+
 
 def label_dataset(dataset, n_clusters, cluster_alg, alg_parameters, sample_weight):
     """
@@ -100,9 +102,7 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
             copy_estimated_labels[estimated_labels == couple[0]] = curr_couple
             copy_estimated_labels[estimated_labels == couple[1]] = curr_couple
             curr_couple += 1
-        # print(estimated_labels[0:10])
         score = metric(copy_estimated_labels, true_labels, **metric_params)
-        # print(couples, score)
         return couples, score
     # still need to assign a cluster
     best_assignment = []
@@ -118,7 +118,6 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
                                            new_remaining_clusters,
                                            estimated_labels=estimated_labels,
                                            true_labels=true_labels, metric=metric)
-        # print(res_couples, score)
         if score >= best_score:
             best_assignment = res_couples
             best_score = score
@@ -132,12 +131,11 @@ class HierarchicalLogisticRegression:
         n_logistics = n_leaves - 1
         self.classifiers = []
         for i in range(n_logistics):
-            self.classifiers.append(LogisticRegression(random_state=random_state+i))
+            self.classifiers.append(LogisticRegression(random_state=random_state + i))
         # value of the class ad the bottom
         self.n_classes = n_classes
         self.leaf_classes = -np.ones(n_leaves)
         self.leaf_class_probs = np.zeros((n_leaves, n_classes))
-
 
     def fit(self, x, y, cluster_labels, leaves_assignment):
         """
@@ -150,6 +148,7 @@ class HierarchicalLogisticRegression:
         :param leaves_assignment: Tells which cluster present in cluster_labels is assigned to which leaf
         :return:
         """
+        self.assign_classes_to_leaves(y, cluster_labels, leaves_assignment)
         logistic_clusters = self.get_regressor_clusters(leaves_assignment)
         trained_classifiers = []
         for classifier, clust_couple in zip(self.classifiers, logistic_clusters):
@@ -172,9 +171,15 @@ class HierarchicalLogisticRegression:
             trained_classifiers.append(classifier)
         self.classifiers = trained_classifiers
 
-    def assign_classes_to_leaves(self, y,):
-        raise NotImplementedError()
-
+    def assign_classes_to_leaves(self, y, cluster_assignment, leaves_assignment):
+        for i in range(self.n_leaves):
+            cluster_leaf = leaves_assignment[i]
+            y_cluster = y[cluster_assignment == cluster_leaf]
+            classes_frequency = []
+            for class_value in range(self.n_classes):
+                classes_frequency.append(len(y_cluster[y_cluster == class_value]))
+            self.leaf_classes[i] = np.argmax(classes_frequency)
+            self.leaf_class_probs[i] = np.array(classes_frequency) / np.sum(classes_frequency)
 
     def get_regressor_clusters(self, leaves_assignment):
         cluster_dimension = self.n_leaves // 2
@@ -186,12 +191,17 @@ class HierarchicalLogisticRegression:
                 start = i * cluster_dimension
                 mid = i * cluster_dimension + cluster_dimension
                 end = i * cluster_dimension + 2 * cluster_dimension
-                print(start, mid, end)
                 cluster_association.append([leaves_assignment[start:mid], leaves_assignment[mid:end]])
                 i += 2
             n_of_adds *= 2
             cluster_dimension = cluster_dimension // 2
         return cluster_association
+
+    def get_classifiers_parameters(self):
+        coefficients = []
+        for classifier in self.classifiers:
+            coefficients.append(classifier.coef_)
+        return coefficients
 
 
 if __name__ == "__main__":
@@ -217,6 +227,7 @@ if __name__ == "__main__":
     clustering_estimators = []
     SEED = 1234
     X = df[list(df.columns)[:-1]]
+    X= StandardScaler().fit_transform(X)
     y = df["Classes"]
     params = dict(n_clusters=4, random_state=SEED)
     kmeans = KMeans(**params)
@@ -243,9 +254,17 @@ if __name__ == "__main__":
     estimator = find_best_estimator(clustering_estimators, completeness_score, y)
     print("The best estimate is {}".format(estimator))
     print("best estimator", best_leaf_assignment(4, estimator.labels_, true_values, completeness_score))
-    print("true value", best_leaf_assignment(4, true_values, true_values, completeness_score))
+    print("true value", )
     print(estimator.labels_)
     n_leaves = 4
-    HLR = HierarchicalLogisticRegression(n_leaves, 0)
-    ass, score = best_leaf_assignment(n_leaves, estimator.labels_, true_values, completeness_score)
-    HLR.fit(X, y, ass)
+    HLR = HierarchicalLogisticRegression(n_classes=len(np.unique(y)), n_leaves=n_leaves, random_state=0)
+    ass, score = best_leaf_assignment(n_leaves, estimator.labels_, true_values, homogeneity_score)
+    best_leaf_assignment(4, true_values, true_values, completeness_score)
+    HLR.fit(X, y, true_values, ass)
+    print("leaf_classes", HLR.leaf_classes)
+    print("leaf classe probs\n", HLR.leaf_class_probs)
+    for i in range(4):
+        print("i", i, "n_samples:", len(y[y == i]))
+    print("Coefficients\n", HLR.get_classifiers_parameters())
+    for classifier in HLR.classifiers:
+        print("score", classifier.score(X, y))
