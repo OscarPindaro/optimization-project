@@ -1,4 +1,5 @@
 import numpy as np
+import sklearn.base
 from sklearn.metrics import completeness_score
 import pandas as pd
 import os
@@ -10,8 +11,11 @@ import numpy as np
 from sklearn.metrics import rand_score, adjusted_rand_score, homogeneity_score, completeness_score
 from sklearn.linear_model import LogisticRegression
 import math
+from sklearn.base import BaseEstimator
 
 from sklearn.preprocessing import StandardScaler
+
+from src.utils import is_power_of_two
 
 
 def label_dataset(dataset, n_clusters, cluster_alg, alg_parameters, sample_weight):
@@ -124,20 +128,17 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
     return best_assignment, best_score
 
 
-class HierarchicalLogisticRegression:
-    def __init__(self, n_classes, n_leaves, random_state):
-        # in a binary tree with n_leaves, the number of branching nodes is n_leaves - 1
-        self.n_leaves = n_leaves
-        n_logistics = n_leaves - 1
-        self.classifiers = []
-        for i in range(n_logistics):
-            self.classifiers.append(LogisticRegression(random_state=random_state + i))
-        # value of the class ad the bottom
+class HierarchicalLogisticRegression(BaseEstimator, ):
+    def __init__(self, n_classes=None, n_leaves=None, random_state=None):
         self.n_classes = n_classes
-        self.leaf_classes = -np.ones(n_leaves)
-        self.leaf_class_probs = np.zeros((n_leaves, n_classes))
+        self.n_leaves = n_leaves
+        self.random_state = random_state
+        # in a binary tree with n_leaves, the number of branching nodes is n_leaves - 1
+        self.classifiers_ = None
+        self.leaf_classes_ = None
+        self.leaf_class_probs_ = None
 
-    def fit(self, x, y, cluster_labels, leaves_assignment):
+    def fit(self, X, y=None, cluster_labels=None, leaves_assignment=None):
         """
         This function fits the hierarchy of logistic classifiers. The y (target values) are use to assign
         class values to the leaf of the tree, while the cluster labels are used to perform the classification.
@@ -146,8 +147,29 @@ class HierarchicalLogisticRegression:
         :param cluster_labels labelling assigned by an external actor. These labels are used to fit the individual
         classifiers
         :param leaves_assignment: Tells which cluster present in cluster_labels is assigned to which leaf
-        :return:
+        :return: the Hierarchical Logistic Regressor fitted on the data
         """
+        # creation of the logistic regressors
+        n_logistics = self.n_leaves - 1
+        self.classifiers_ = list()
+        for i in range(n_logistics):
+            if self.random_state is None:
+                self.classifiers_.append(LogisticRegression())
+            else:
+                self.classifiers_.append(LogisticRegression(random_state=self.random_state + i))
+
+        # initialization of the value of the classes at the leaves and their probabilities
+        if self.n_classes is None:
+            raise ValueError("n_classes is None")
+        if self.n_classes < 2:
+            raise ValueError("n_classes value is {}, which is less then 2".format(self.n_classes))
+        if self.n_leaves is None:
+            raise ValueError("n_leaves is None")
+        if not is_power_of_two(self.n_leaves):
+            raise ValueError("n_leaves is not a power of 2")
+        self.leaf_classes_ = -np.ones(self.n_leaves)
+        self.leaf_class_probs_ = np.zeros((self.n_leaves, self.n_classes))
+
         self.assign_classes_to_leaves(y, cluster_labels, leaves_assignment)
         logistic_clusters = self.get_regressor_clusters(leaves_assignment)
         trained_classifiers = []
@@ -171,6 +193,8 @@ class HierarchicalLogisticRegression:
             trained_classifiers.append(classifier)
         self.classifiers = trained_classifiers
 
+        return self
+
     def assign_classes_to_leaves(self, y, cluster_assignment, leaves_assignment):
         for i in range(self.n_leaves):
             cluster_leaf = leaves_assignment[i]
@@ -178,8 +202,8 @@ class HierarchicalLogisticRegression:
             classes_frequency = []
             for class_value in range(self.n_classes):
                 classes_frequency.append(len(y_cluster[y_cluster == class_value]))
-            self.leaf_classes[i] = np.argmax(classes_frequency)
-            self.leaf_class_probs[i] = np.array(classes_frequency) / np.sum(classes_frequency)
+            self.leaf_classes_[i] = np.argmax(classes_frequency)
+            self.leaf_class_probs_[i] = np.array(classes_frequency) / np.sum(classes_frequency)
 
     def get_regressor_clusters(self, leaves_assignment):
         cluster_dimension = self.n_leaves // 2
@@ -202,5 +226,3 @@ class HierarchicalLogisticRegression:
         for classifier in self.classifiers:
             coefficients.append(classifier.coef_)
         return coefficients
-
-
