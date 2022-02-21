@@ -137,6 +137,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
         self.classifiers_ = None
         self.leaf_classes_ = None
         self.leaf_class_probs_ = None
+        self.cluster_leaves_association_ = None
 
     def fit(self, X, y=None, cluster_labels=None, leaves_assignment=None):
         """
@@ -171,15 +172,17 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
         self.leaf_class_probs_ = np.zeros((self.n_leaves, self.n_classes))
 
         self.assign_classes_to_leaves(y, cluster_labels, leaves_assignment)
-        logistic_clusters = self.get_regressor_clusters(leaves_assignment)
+        self.set_regressor_clusters(leaves_assignment)
+
+        # hierarchical training of the clusters
         trained_classifiers = []
-        for classifier, clust_couple in zip(self.classifiers, logistic_clusters):
+        for classifier, clust_couple in zip(self.classifiers_, self.cluster_leaves_association_):
             # filter the samples that are considered by the current clusters
             x_cluster_samples = []
             cl_cluster_samples = []
             for cluster_number in clust_couple[0] + clust_couple[1]:
                 # this filtering should have no need of deep copying
-                x_cluster_samples.append(x[y == cluster_number])
+                x_cluster_samples.append(X[y == cluster_number])
                 cl_cluster_samples.append(y[y == cluster_number])
             x_filtered = np.concatenate(x_cluster_samples)
             cl_filtered = np.concatenate(cl_cluster_samples)
@@ -191,8 +194,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
             classifier = classifier.fit(x_filtered, cl_filtered)
             # save the classifiers in the class
             trained_classifiers.append(classifier)
-        self.classifiers = trained_classifiers
-
+        self.classifiers_ = trained_classifiers
         return self
 
     def assign_classes_to_leaves(self, y, cluster_assignment, leaves_assignment):
@@ -205,7 +207,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
             self.leaf_classes_[i] = np.argmax(classes_frequency)
             self.leaf_class_probs_[i] = np.array(classes_frequency) / np.sum(classes_frequency)
 
-    def get_regressor_clusters(self, leaves_assignment):
+    def set_regressor_clusters(self, leaves_assignment):
         cluster_dimension = self.n_leaves // 2
         n_of_adds = 1
         cluster_association = []
@@ -219,7 +221,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
                 i += 2
             n_of_adds *= 2
             cluster_dimension = cluster_dimension // 2
-        return cluster_association
+        self.cluster_leaves_association_ = cluster_association
 
     def get_classifiers_parameters(self):
         coefficients = []
