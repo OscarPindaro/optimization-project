@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.metrics import rand_score, adjusted_rand_score, homogeneity_score, completeness_score
 from sklearn.linear_model import LogisticRegression
 import math
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, ClassifierMixin
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_X_y
@@ -129,12 +129,12 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
     return best_assignment, best_score
 
 
-class HierarchicalLogisticRegression(BaseEstimator, ):
+class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
     def __init__(self, n_classes=None, n_leaves=None, random_state=None):
         self.n_classes = n_classes
         self.n_leaves = n_leaves
         self.random_state = random_state
-        # in a binary tree with n_leaves, the number of branching nodes is n_leaves - 1
+        self.is_fitted_ = False
         self.classifiers_ = None
         self.leaf_classes_ = None
         self.leaf_class_probs_ = None
@@ -162,7 +162,6 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
             X, cluster_labels = check_X_y(X, cluster_labels)
         except ValueError as v_error:
             raise ValueError("Problem between X and cluster_labels.\n Original exception: {}".format(v_error))
-
 
         # creation of the logistic regressors
         n_logistics = self.n_leaves - 1
@@ -218,6 +217,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
             intercepts.append(classifier.intercept_)
         self.coef_ = coefficients
         self.intercept_ = intercepts
+        self.is_fitted_ = True
 
         return self
 
@@ -246,4 +246,20 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
             n_of_adds *= 2
             cluster_dimension = cluster_dimension // 2
         self.cluster_leaves_association_ = cluster_association
+
+    def get_params(self, deep=True):
+        ret_dict = dict(n_classes=self.n_classes,
+                        n_leaves=self.n_leaves,
+                        random_state=self.random_state)
+        if deep:
+            if self.classifiers_ is not None:
+                for i in range(len(self.classifiers_)):
+                    for key, value in self.classifiers_[i].get_params().items():
+                        ret_dict["classifier_{}_{}".format(i, key)] = value
+        return dict
+
+    def set_params(self, **params):
+        for parameter, value in params.items():
+            setattr(self, parameter, value)
+        return self
 
