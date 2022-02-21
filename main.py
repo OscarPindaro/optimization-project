@@ -62,8 +62,9 @@ if __name__ == "__main__":
     print("true value", )
     print(estimator.labels_)
     n_leaves = 4
-    HLR = HierarchicalLogisticRegression(n_classes=len(np.unique(y)), n_leaves=n_leaves, random_state=0)
-    ass, score = best_leaf_assignment(n_leaves, estimator.labels_, true_values, homogeneity_score)
+    HLR = HierarchicalLogisticRegression(n_classes=len(np.unique(y)), n_leaves=n_leaves, random_state=0,
+                                         logistic_params={"class_weight": "balanced"})
+    ass, score = best_leaf_assignment(n_leaves, true_values, true_values, completeness_score)
     best_leaf_assignment(4, true_values, true_values, completeness_score)
     HLR.fit(X, y, true_values, ass)
     print("leaf_classes", HLR.leaf_classes_)
@@ -76,4 +77,4 @@ if __name__ == "__main__":
     fine = -1
     print(HLR.predict(X[0:fine, :]))
     print("FINE PREDICT")
-    print(HLR.score(X[0:fine,:], y[0:fine]))
+    print(HLR.score(X[0:fine, :], y[0:fine]))

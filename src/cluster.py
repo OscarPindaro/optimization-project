@@ -130,10 +130,13 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
 
 
 class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
-    def __init__(self, n_classes=None, n_leaves=None, random_state=None):
+    def __init__(self, n_classes=None, n_leaves=None, random_state=None, logistic_params=None):
+        # parames
         self.n_classes = n_classes
         self.n_leaves = n_leaves
         self.random_state = random_state
+        self.logistic_params=logistic_params
+        # fitted attributes
         self.is_fitted_ = False
         self.classifiers_ = None
         self.leaf_classes_ = None
@@ -166,11 +169,14 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         # creation of the logistic regressors
         n_logistics = self.n_leaves - 1
         self.classifiers_ = list()
+        # empty values
+        if self.logistic_params is None:
+            self.logistic_params = {}
         for i in range(n_logistics):
             if self.random_state is None:
-                self.classifiers_.append(LogisticRegression())
+                self.classifiers_.append(LogisticRegression(**self.logistic_params))
             else:
-                self.classifiers_.append(LogisticRegression(random_state=self.random_state + i))
+                self.classifiers_.append(LogisticRegression(random_state=self.random_state + i, **self.logistic_params))
 
         # initialization of the value of the classes at the leaves and their probabilities
         if self.n_classes is None:
