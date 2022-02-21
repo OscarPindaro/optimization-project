@@ -14,6 +14,7 @@ import math
 from sklearn.base import BaseEstimator
 
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import check_X_y
 
 from src.utils import is_power_of_two
 
@@ -152,6 +153,17 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
         :param leaves_assignment: Tells which cluster present in cluster_labels is assigned to which leaf
         :return: the Hierarchical Logistic Regressor fitted on the data
         """
+
+        # checking X and y sizes
+        X, y = check_X_y(X, y)
+
+        # checking cluster labels and X
+        try:
+            X, cluster_labels = check_X_y(X, cluster_labels)
+        except ValueError as v_error:
+            raise ValueError("Problem between X and cluster_labels.\n Original exception: {}".format(v_error))
+
+
         # creation of the logistic regressors
         n_logistics = self.n_leaves - 1
         self.classifiers_ = list()
