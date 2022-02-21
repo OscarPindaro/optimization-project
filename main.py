@@ -10,7 +10,7 @@ from sklearn.preprocessing import StandardScaler
 from src.cluster import find_best_estimator, best_leaf_assignment, HierarchicalLogisticRegression
 
 if __name__ == "__main__":
-    DATASET_PATH = os.path.join("../datasets", "car.csv")
+    DATASET_PATH = os.path.join("datasets", "car.csv")
     names = ["buying", "maint", "doors", "persons", "lug_boot", "safety", "Classes"]
     df = pd.read_csv(DATASET_PATH, delimiter=";", header=0, names=names)
     df = df.convert_dtypes()
@@ -66,10 +66,11 @@ if __name__ == "__main__":
     ass, score = best_leaf_assignment(n_leaves, estimator.labels_, true_values, homogeneity_score)
     best_leaf_assignment(4, true_values, true_values, completeness_score)
     HLR.fit(X, y, true_values, ass)
-    print("leaf_classes", HLR.leaf_classes)
-    print("leaf classe probs\n", HLR.leaf_class_probs)
+    print("leaf_classes", HLR.leaf_classes_)
+    print("leaf classe probs\n", HLR.leaf_class_probs_)
+    print("cluster leaves association: ", HLR.cluster_leaves_association_)
     for i in range(4):
         print("i", i, "n_samples:", len(y[y == i]))
-    print("Coefficients\n", HLR.get_classifiers_parameters())
-    for classifier in HLR.classifiers:
-        print("score", classifier.score(X, y))
+    print("Coefficients\n", HLR.coef_)
+    print("Intercepts\n", HLR.intercept_)
+

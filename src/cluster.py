@@ -138,6 +138,8 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
         self.leaf_classes_ = None
         self.leaf_class_probs_ = None
         self.cluster_leaves_association_ = None
+        self.coef_ = None
+        self.intercept_ = None
 
     def fit(self, X, y=None, cluster_labels=None, leaves_assignment=None):
         """
@@ -195,6 +197,16 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
             # save the classifiers in the class
             trained_classifiers.append(classifier)
         self.classifiers_ = trained_classifiers
+
+        # classifier coefficients
+        coefficients = []
+        intercepts = []
+        for classifier in self.classifiers_:
+            coefficients.append(classifier.coef_)
+            intercepts.append(classifier.intercept_)
+        self.coef_ = coefficients
+        self.intercept_ = intercepts
+
         return self
 
     def assign_classes_to_leaves(self, y, cluster_assignment, leaves_assignment):
@@ -223,8 +235,3 @@ class HierarchicalLogisticRegression(BaseEstimator, ):
             cluster_dimension = cluster_dimension // 2
         self.cluster_leaves_association_ = cluster_association
 
-    def get_classifiers_parameters(self):
-        coefficients = []
-        for classifier in self.classifiers:
-            coefficients.append(classifier.coef_)
-        return coefficients
