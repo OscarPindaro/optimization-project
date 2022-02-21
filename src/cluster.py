@@ -263,3 +263,21 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
             setattr(self, parameter, value)
         return self
 
+    def predict(self, X):
+        predictions = list()
+        for sample in X:
+            # reshape needed since it's one sample ad a time but predict needs 2D arrays
+            sample = sample.reshape(1, -1)
+            classifier_index = 0
+            while classifier_index < len(self.classifiers_):
+                prediction = self.classifiers_[classifier_index].predict(sample)[0]
+                # the classifiers_ is an array that mimics the structure of a binary tree.
+                # The left child of node i is 2*i + 1, while the right child is 2*i+2.
+                classifier_index = 2 * classifier_index + prediction + 1
+            # still using binary trees property
+            leaf = classifier_index - len(self.classifiers_)
+            predictions.append(self.leaf_classes_[leaf])
+        return np.array(predictions)
+
+    def score(self, X, y, sample_weight=None):
+        return super().score(X, y, sample_weight)

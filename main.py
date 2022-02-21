@@ -32,7 +32,7 @@ if __name__ == "__main__":
     clustering_estimators = []
     SEED = 1234
     X = df[list(df.columns)[:-1]]
-    X= StandardScaler().fit_transform(X)
+    X = StandardScaler().fit_transform(X)
     y = df["Classes"]
     params = dict(n_clusters=4, random_state=SEED)
     kmeans = KMeans(**params)
@@ -73,4 +73,7 @@ if __name__ == "__main__":
         print("i", i, "n_samples:", len(y[y == i]))
     print("Coefficients\n", HLR.coef_)
     print("Intercepts\n", HLR.intercept_)
-
+    fine = -1
+    print(HLR.predict(X[0:fine, :]))
+    print("FINE PREDICT")
+    print(HLR.score(X[0:fine,:], y[0:fine]))
