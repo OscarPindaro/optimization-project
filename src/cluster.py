@@ -146,6 +146,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         :param leaves_assignment: Tells which cluster present in cluster_labels is assigned to which leaf
         :return: the Hierarchical Logistic Regressor fitted on the data
         """
+        n_features = X.shape[1]
 
         # checking X and y sizes
         X, y = check_X_y(X, y)
@@ -200,7 +201,11 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
             for i in range(len(clust_couple)):
                 for cluster_value in clust_couple[i]:
                     cl_filtered[copy_y_filtered == cluster_value] = i
-            classifier = classifier.fit(x_filtered, cl_filtered)
+            if np.unique(cl_filtered).size > 1:
+                classifier = classifier.fit(x_filtered, cl_filtered)
+            else:
+                classifier = FixedBinaryClassificator(value=np.unique(cl_filtered)[0], n_features=n_features)
+
             # save the classifiers in the class
             trained_classifiers.append(classifier)
         self.classifiers_ = trained_classifiers
@@ -316,3 +321,22 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         # If we transpose this list, we get an array of shape (n_samples, n_leaves), and therefore each
         # row is the probability distribution of a given sample to fall in every leaf
         return np.array(leaves_probabilities).transpose()
+
+
+class FixedBinaryClassificator:
+
+    def __init__(self, value, n_features):
+        if value != 0 and value != 1:
+            raise ValueError("Value is not 0 or 1. Insted, value={}".format(value))
+        self.value = value
+        self.coef_ = np.zeros((n_features,))
+        self.intercept_ = np.zeros(1)
+
+
+    def predict(self, X):
+        return np.ones((X.shape[0],),dtype=int)*self.value
+
+    def predict_proba(self, X):
+        to_ret = np.zeros((X.shape[0], 2), dtype=int)
+        to_ret[:, self.value] = 1
+        return to_ret
