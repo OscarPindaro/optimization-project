@@ -37,7 +37,7 @@ if __name__ == "__main__":
     y = car["Classes"]
     params = dict(n_clusters=3, random_state=SEED)
     kmeans = KMeans(**params)
-    kmeans = kmeans.fit(X, sample_weight=np.zeros(len(car)))
+    kmeans = kmeans.fit(np.random.random(X.shape))
     clustering_estimators.append(kmeans)
     params = dict(n_clusters=4, random_state=SEED, assign_labels="discretize", gamma=1)
     spectral = SpectralClustering(**params)
@@ -65,20 +65,24 @@ if __name__ == "__main__":
     n_leaves = 4
     HLR = HierarchicalLogisticRegression(n_classes=len(np.unique(y)), n_leaves=n_leaves, random_state=0,
                                          logistic_params={"class_weight": "balanced"})
-    ass, score = best_leaf_assignment(n_leaves, true_values, true_values, completeness_score)
-    best_leaf_assignment(4, true_values, true_values, completeness_score)
+
+    use_estimator = True
+    if use_estimator:
+        ass, score = best_leaf_assignment(n_leaves, estimator.labels_, true_values, completeness_score)
+        best_leaf_assignment(4, estimator.labels_, true_values, completeness_score)
+        print("used estimator")
+    else:
+        ass, score = best_leaf_assignment(n_leaves, true_values, true_values, completeness_score)
+        best_leaf_assignment(4, true_values, true_values, completeness_score)
     HLR.fit(X, y, true_values, ass)
     print("leaf_classes", HLR.leaf_classes_)
     print("leaf classe probs\n", HLR.leaf_class_probs_)
     print("cluster leaves association: ", HLR.cluster_leaves_association_)
-    for i in range(4):
-        print("i", i, "n_samples:", len(y[y == i]))
-    print("Coefficients\n", HLR.coef_)
-    print("Intercepts\n", HLR.intercept_)
     fine = -1
     print(HLR.predict(X[0:fine, :]))
     print("FINE PREDICT")
     print(HLR.score(X[0:fine, :], y[0:fine]))
-    fine = -1
+    fine = 2
     print(HLR.leaves_probabilities(X[0:fine]))
     print(HLR.leaves_probabilities(X[0:fine]).shape)
+    print(HLR.predict_proba(X[0:fine]))

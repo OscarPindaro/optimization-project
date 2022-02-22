@@ -273,6 +273,11 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
             predictions.append(self.leaf_classes_[leaf])
         return np.array(predictions)
 
+    def predict_proba(self, X):
+        leaves_probabilities = self.leaves_probabilities(X)
+        # class transformation can be done using self.leaf_class_probs that tells how to map leaf and classes
+        return leaves_probabilities.dot(self.leaf_class_probs_)
+
     def score(self, X, y, sample_weight=None):
         return super().score(X, y, sample_weight)
 
