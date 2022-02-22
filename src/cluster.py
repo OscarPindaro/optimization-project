@@ -118,10 +118,12 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
 
 
 class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
-    def __init__(self, n_classes=None, n_leaves=None, random_state=None, logistic_params=None):
+    def __init__(self, n_classes=None, n_leaves=None, prediction_type="deterministic", random_state=None,
+                 logistic_params=None):
         # parames
         self.n_classes = n_classes
         self.n_leaves = n_leaves
+        self.prediction_type = prediction_type
         self.random_state = random_state
         self.logistic_params = logistic_params
         # fitted attributes
@@ -258,6 +260,15 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
+        if self.prediction_type is "deterministic":
+            predictions = self.deterministic_predict(X)
+        elif self.prediction_type is "probabilistic":
+            predictions = self.probabilistic_predict(X)
+        else:
+            raise ValueError("The value {} of parameter prediction_type is not admissible".format(self.prediction_type))
+        return predictions
+
+    def deterministic_predict(self, X):
         predictions = list()
         for sample in X:
             # reshape needed since it's one sample ad a time but predict needs 2D arrays
@@ -272,6 +283,10 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
             leaf = classifier_index - len(self.classifiers_)
             predictions.append(self.leaf_classes_[leaf])
         return np.array(predictions)
+
+    def probabilistic_predict(self, X):
+        class_probabilities = self.predict_proba(X)
+        return np.argmax(class_probabilities, axis=1)
 
     def predict_proba(self, X):
         leaves_probabilities = self.leaves_probabilities(X)
