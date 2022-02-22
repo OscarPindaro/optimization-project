@@ -79,3 +79,6 @@ if __name__ == "__main__":
     print(HLR.predict(X[0:fine, :]))
     print("FINE PREDICT")
     print(HLR.score(X[0:fine, :], y[0:fine]))
+    fine = -1
+    print(HLR.leaves_probabilities(X[0:fine]))
+    print(HLR.leaves_probabilities(X[0:fine]).shape)

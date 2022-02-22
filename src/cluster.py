@@ -2,8 +2,9 @@ import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils import check_X_y
+import math
 
-from src.utils import is_power_of_two
+from src.utils import is_power_of_two, binary_decomposition, extend_binary_decomposition
 
 
 def label_dataset(dataset, n_clusters, cluster_alg, alg_parameters, sample_weight):
@@ -122,7 +123,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         self.n_classes = n_classes
         self.n_leaves = n_leaves
         self.random_state = random_state
-        self.logistic_params=logistic_params
+        self.logistic_params = logistic_params
         # fitted attributes
         self.is_fitted_ = False
         self.classifiers_ = None
@@ -274,3 +275,24 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
 
     def score(self, X, y, sample_weight=None):
         return super().score(X, y, sample_weight)
+
+    def leaves_probabilities(self, X):
+        n_digits = int(math.log(self.n_leaves, 2))  # number of digits that can decode the tree
+        leaves_probabilities = []
+        for leaf_number in range(self.n_leaves):
+            binary_list = binary_decomposition(leaf_number)
+            binary_list = extend_binary_decomposition(binary_list, n_digits)
+            leaf_prob = np.ones((X.shape[0],))
+            classifier_index = 0
+            digit_index = 0
+            while digit_index < len(binary_list):
+                digit = binary_list[digit_index]
+                leaf_prob = leaf_prob * self.classifiers_[classifier_index].predict_proba(X)[:, digit]
+                classifier_index = 2 * classifier_index + digit + 1
+                digit_index += 1
+            leaves_probabilities.append(leaf_prob)
+        # leaves_probabilities now contains n_leaves arrays, and each array contains the probability of each sample
+        # to fall in the leaf i
+        # If we transpose this list, we get an array of shape (n_samples, n_leaves), and therefore each
+        # row is the probability distribution of a given sample to fall in every leaf
+        return np.array(leaves_probabilities).transpose()
