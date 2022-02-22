@@ -1,19 +1,6 @@
 import numpy as np
-import sklearn.base
-from sklearn.metrics import completeness_score
-import pandas as pd
-import os
-from sklearn import preprocessing
-import seaborn as sns
-import matplotlib.pyplot as plt
-from sklearn.cluster import KMeans, AgglomerativeClustering, SpectralClustering, Birch
-import numpy as np
-from sklearn.metrics import rand_score, adjusted_rand_score, homogeneity_score, completeness_score
-from sklearn.linear_model import LogisticRegression
-import math
 from sklearn.base import BaseEstimator, ClassifierMixin
-
-from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
 from sklearn.utils import check_X_y
 
 from src.utils import is_power_of_two
@@ -145,11 +132,11 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         self.coef_ = None
         self.intercept_ = None
 
-    def fit(self, X, y=None, cluster_labels=None, leaves_assignment=None):
+    def fit(self, X, y, cluster_labels=None, leaves_assignment=None):
         """
         This function fits the hierarchy of logistic classifiers. The y (target values) are use to assign
         class values to the leaf of the tree, while the cluster labels are used to perform the classification.
-        :param x: Dataset on which the classifiers a re trained of shape (n_sample, n_features)
+        :param X: Dataset on which the classifiers a re trained of shape (n_sample, n_features)
         :param y: Target of the classification of the hierarchy of shape (n_sample,)
         :param cluster_labels labelling assigned by an external actor. These labels are used to fit the individual
         classifiers

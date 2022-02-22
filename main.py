@@ -6,37 +6,38 @@ from sklearn import preprocessing
 from sklearn.cluster import KMeans, SpectralClustering, AgglomerativeClustering, Birch
 from sklearn.metrics import completeness_score, homogeneity_score
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 from src.cluster import find_best_estimator, best_leaf_assignment, HierarchicalLogisticRegression
 
 if __name__ == "__main__":
     DATASET_PATH = os.path.join("datasets", "car.csv")
     names = ["buying", "maint", "doors", "persons", "lug_boot", "safety", "Classes"]
-    df = pd.read_csv(DATASET_PATH, delimiter=";", header=0, names=names)
-    df = df.convert_dtypes()
-    TARGET_INDEX = df.shape[1] - 1
+    car = pd.read_csv(DATASET_PATH, delimiter=";", header=0, names=names)
+    car = car.convert_dtypes()
+    TARGET_INDEX = car.shape[1] - 1
     # dictionary converting ordinal categories to values
     cost_dict = {"low": 0, "med": 1, "high": 2, "vhigh": 3}
     doors_dict = {"2": 2, "3": 3, "4": 4, "5more": 5}
     persons_dict = {"2": 2, "4": 4, "more": 5}
     dimension_dict = {"small": 0, "med": 1, "big": 2}
     # buying
-    df["buying"] = df["buying"].apply(lambda x: cost_dict[x])
-    df["maint"] = df["maint"].apply(lambda x: cost_dict[x])
-    df["doors"] = df["doors"].apply(lambda x: doors_dict[x])
-    df["persons"] = df["persons"].apply(lambda x: persons_dict[x])
-    df["lug_boot"] = df["lug_boot"].apply(lambda x: dimension_dict[x])
-    df["safety"] = df["safety"].apply(lambda x: cost_dict[x])
-    classes_encoder = preprocessing.LabelEncoder().fit(df["Classes"])
-    df["Classes"] = classes_encoder.transform(df["Classes"])
+    car["buying"] = car["buying"].apply(lambda x: cost_dict[x])
+    car["maint"] = car["maint"].apply(lambda x: cost_dict[x])
+    car["doors"] = car["doors"].apply(lambda x: doors_dict[x])
+    car["persons"] = car["persons"].apply(lambda x: persons_dict[x])
+    car["lug_boot"] = car["lug_boot"].apply(lambda x: dimension_dict[x])
+    car["safety"] = car["safety"].apply(lambda x: cost_dict[x])
+    classes_encoder = preprocessing.LabelEncoder().fit(car["Classes"])
+    car["Classes"] = classes_encoder.transform(car["Classes"])
     clustering_estimators = []
     SEED = 1234
-    X = df[list(df.columns)[:-1]]
+    X = car[list(car.columns)[:-1]]
     X = StandardScaler().fit_transform(X)
-    y = df["Classes"]
-    params = dict(n_clusters=4, random_state=SEED)
+    y = car["Classes"]
+    params = dict(n_clusters=3, random_state=SEED)
     kmeans = KMeans(**params)
-    kmeans = kmeans.fit(X, sample_weight=np.zeros(len(df)))
+    kmeans = kmeans.fit(X, sample_weight=np.zeros(len(car)))
     clustering_estimators.append(kmeans)
     params = dict(n_clusters=4, random_state=SEED, assign_labels="discretize", gamma=1)
     spectral = SpectralClustering(**params)
@@ -51,7 +52,7 @@ if __name__ == "__main__":
     birch = birch.fit(X)
     clustering_estimators.append(birch)
 
-    true_values = df["Classes"]
+    true_values = car["Classes"]
     f = completeness_score
     for estimator in clustering_estimators:
         print(estimator.__class__.__name__, f(true_values, estimator.labels_))
