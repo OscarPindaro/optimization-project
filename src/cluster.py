@@ -95,7 +95,7 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
             copy_estimated_labels[estimated_labels == couple[0]] = curr_couple
             copy_estimated_labels[estimated_labels == couple[1]] = curr_couple
             curr_couple += 1
-        score = metric(copy_estimated_labels, true_labels, **metric_params)
+        score = metric(true_labels, copy_estimated_labels, **metric_params)
         return couples, score
     # still need to assign a cluster
     best_assignment = []
