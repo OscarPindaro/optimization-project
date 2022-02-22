@@ -232,6 +232,8 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
             self.leaf_classes_[i] = np.argmax(classes_frequency)
             if np.sum(classes_frequency) == 0:
                 self.leaf_class_probs_[i] = np.array(classes_frequency)
+            else:
+                self.leaf_class_probs_[i] = classes_frequency/np.sum(classes_frequency)
 
     def set_regressor_clusters(self, leaves_assignment):
         cluster_dimension = self.n_leaves // 2
@@ -333,9 +335,8 @@ class FixedBinaryClassificator:
         self.coef_ = np.zeros((n_features,))
         self.intercept_ = np.zeros(1)
 
-
     def predict(self, X):
-        return np.ones((X.shape[0],),dtype=int)*self.value
+        return np.ones((X.shape[0],), dtype=int) * self.value
 
     def predict_proba(self, X):
         to_ret = np.zeros((X.shape[0], 2), dtype=int)
