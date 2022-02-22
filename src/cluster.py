@@ -230,7 +230,8 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
             for class_value in range(self.n_classes):
                 classes_frequency.append(len(y_cluster[y_cluster == class_value]))
             self.leaf_classes_[i] = np.argmax(classes_frequency)
-            self.leaf_class_probs_[i] = np.array(classes_frequency) / np.sum(classes_frequency)
+            if np.sum(classes_frequency) == 0:
+                self.leaf_class_probs_[i] = np.array(classes_frequency)
 
     def set_regressor_clusters(self, leaves_assignment):
         cluster_dimension = self.n_leaves // 2
