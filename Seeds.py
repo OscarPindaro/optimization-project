@@ -17,7 +17,7 @@ from sklearn.metrics import completeness_score, homogeneity_score, balanced_accu
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, LabelEncoder
 from sklearn.model_selection import train_test_split
 import matplotlib.pyplot as plt
-from src.ORCTModel import ORCTModel, predicted_lab, accuracy
+from src.ORCTModel import ORCTModel, predicted_lab, accuracy, pr
 from src.cluster import HierarchicalLogisticRegression, best_leaf_assignment
 
 import operator
@@ -52,6 +52,7 @@ if __name__ == "__main__":
     # plt.bar(vals, heights)
     # plt.show()
     X_std = X.copy()
+    X_std[feature_names] = MaxAbsScaler().fit_transform(X[feature_names])
     X_train, X_test, y_train, y_test = train_test_split(X_std, y, test_size=0.25, random_state=SEED)
     index_features = list(range(0, len(feature_names)))
     index_instances = list(X_train.index)
@@ -136,9 +137,11 @@ if __name__ == "__main__":
 
     HLR = HierarchicalLogisticRegression(n_classes=len(np.unique(y_train)), n_leaves=n_leaves,
                                          prediction_type="deterministic", random_state=0,
-                                         logistic_params={"class_weight": "balanced",
-                                                          "penalty":"l1",
-                                                          "solver":"liblinear"})
+                                         logistic_params={"class_weight": "balanced"})
+                                                          # "penalty": "elasticnet",
+                                                          # "solver": "saga",
+                                                          # "l1_ratio": 0.9,
+                                                          # "fit_intercept": False})
 
     # In[11]:
 
@@ -224,16 +227,17 @@ if __name__ == "__main__":
 
     # In[15]:
 
-    a = np.stack(HLR.coef_).transpose()
-    mu = np.stack(HLR.intercept_)
+    a = np.stack(HLR.coef_).transpose() /512
+    # mu = np.zeros_like(np.stack(HLR.intercept_))
+    mu=np.stack(HLR.intercept_) /512
     C = HLR.leaf_class_probs_.transpose()
     # j+1 due to the convention for the branch nodes (numbered from 1)
     # it's in the form
     # (0,1) (0,2) (0,3)
     # (1,1) (1,2) (1,3) and so one
     init_a = {(i, j + 1): a[i, j] for i in range(len(index_features)) for j in range(3)}
-    print("a\n",a)
-    print("C\n",C)
+    print("a\n", a)
+    print("C\n", C)
     print("mu\n", mu)
     print(HLR.leaf_class_probs_)
     # in the form (1) (2) (3)
@@ -247,8 +251,6 @@ if __name__ == "__main__":
     model = ORCTModel(I_in_k=I_in_k, I_k_fun=I_k, index_features=index_features, BF_in_NL_R=BF_in_NL_R,
                       B_in_NR=B_in_NR, B_in_NL=B_in_NL, error_weights=my_W, x_train=my_x, init_a=init_a,
                       init_mu=init_mu, init_C=init_c)
-
-    # In[ ]:
 
     ipopt_path = "~/miniconda3/envs/decision_trees/bin/ipopt"
     model.solve(ipopt_path)

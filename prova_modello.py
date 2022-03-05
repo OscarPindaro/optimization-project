@@ -102,8 +102,8 @@ if __name__ == "__main__":
     index_instances = list(X_train.index)
     my_x = {(i, j): df_train.loc[i][j] for i in index_instances for j in index_features}
 
-    a = np.stack(HLR.coef_).transpose()
-    mu = np.stack(HLR.intercept_)
+    a = np.stack(HLR.coef_).transpose() / 512
+    mu = np.stack(HLR.intercept_) /512
     C = HLR.leaf_class_probs_.transpose()
     # j+1 due to the convention for the branch nodes (numbered from 1)
     # it's in the form
@@ -126,17 +126,15 @@ if __name__ == "__main__":
 
     val = model.extraction_va()
 
-
-    labels = predicted_lab(model.model, X_test, val, index_feature)
+    labels = predicted_lab(model.model, X_test, val, index_features)
     a = accuracy(y_test.to_numpy(), labels)
 
-
-    init_a = np.random.uniform(0,1,None)
-    init_c = np.random.uniform(0,1,None)
-    init_mu = np.random.uniform(0,1,None)
+    init_a = np.random.uniform(0, 1, None)
+    init_c = np.random.uniform(0, 1, None)
+    init_mu = np.random.uniform(0, 1, None)
     model_no_init = ORCTModel(I_in_k=I_in_k, I_k_fun=I_k, index_features=index_features, BF_in_NL_R=BF_in_NL_R,
-                      B_in_NR=B_in_NR, B_in_NL=B_in_NL, error_weights=my_W, x_train=my_x, init_a=init_a,
-                      init_mu=init_mu, init_C=init_c)
+                              B_in_NR=B_in_NR, B_in_NL=B_in_NL, error_weights=my_W, x_train=my_x, init_a=init_a,
+                              init_mu=init_mu, init_C=init_c)
     model_no_init.solve(ipopt_path)
     val_no_init = model_no_init.extraction_va()
     labels_no_init = predicted_lab(model_no_init.model, X_test, val_no_init, index_features)
@@ -148,3 +146,5 @@ if __name__ == "__main__":
     print("ORCT=", a)
     print("ORCT no init", a_no_init)
 
+    print(val["a"])
+    print(val_no_init["a"])

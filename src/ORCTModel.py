@@ -56,8 +56,8 @@ class ORCTModel:
         model.C = Var(model.K, model.N_L, within=PercentFraction, initialize=init_C)
 
         # An auxiliary variables
-        model.P = Var(model.I, model.N_L, within=PercentFraction, bounds=(1e-20,None), initialize=init_P)
-        model.p = Var(model.I, model.N_B, within=PercentFraction, bounds=(1e-20,None), initialize=init_p)
+        model.P = Var(model.I, model.N_L, within=PercentFraction, initialize=init_P)
+        model.p = Var(model.I, model.N_B, within=PercentFraction, initialize=init_p)
 
         model.cost = Objective(rule=cost_rule, sense=minimize)
         model.Pr = Constraint(model.I, model.N_L, rule=Pr)
@@ -76,7 +76,7 @@ class ORCTModel:
         self.results = None
         opt = SolverFactory('ipopt',
                             executable=exec_path)  # in executable the directory path of ipopt.exe
-        opt.options["halt_on_ampl_error"]="yes"
+        opt.options["halt_on_ampl_error"] = "yes"
         results = opt.solve(self.model, tee=True)
         self.results = results
         return results
@@ -112,7 +112,7 @@ def Pr(model, i, tl):
 
 
 def pr(model, i, tb):
-    return 1 / (1 + exp(-512* ((sum(model.x[i, j] * model.a[j, tb] for j in model.f_s) / 4) - model.mu[tb]))) == \
+    return 1 / (1 + exp(-512 * ((sum(model.x[i, j] * model.a[j, tb] for j in model.f_s) / 4) - model.mu[tb]))) == \
            model.p[i, tb]
 
 
@@ -158,8 +158,10 @@ def Prob(model, var, x, leaf_idx, index_features):
 
 # Calculate the predicted label of a single instance
 def comp_label(model, x, var, index_features):
-    prob = {k: sum(Prob(model, var, x, i, index_features) * var['C']['C[' + str(k) + ',' + str(i) + ']'] for i in model.N_L) for k in
-            model.K}
+    prob = {
+        k: sum(Prob(model, var, x, i, index_features) * var['C']['C[' + str(k) + ',' + str(i) + ']'] for i in model.N_L)
+        for k in
+        model.K}
     return int(max(prob, key=prob.get))
 
 
@@ -175,6 +177,3 @@ def predicted_lab(model, X_test, var, index_features):
 def accuracy(y, y_pred):
     l = [1 if y[i] == y_pred[i] else 0 for i in range(0, len(y))]
     return sum(l) / len(y)
-
-
-
