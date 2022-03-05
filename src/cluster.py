@@ -204,6 +204,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
             if np.unique(cl_filtered).size > 1:
                 classifier = classifier.fit(x_filtered, cl_filtered)
             else:
+                # TODO this may have some negative effects on precision with n_leaves greater than 4
                 classifier = FixedBinaryClassificator(value=np.unique(cl_filtered)[0], n_features=n_features)
 
             # save the classifiers in the class
@@ -214,8 +215,8 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         coefficients = []
         intercepts = []
         for classifier in self.classifiers_:
-            coefficients.append(classifier.coef_)
-            intercepts.append(classifier.intercept_)
+            coefficients.append(classifier.coef_.squeeze())
+            intercepts.append(classifier.intercept_.squeeze())
         self.coef_ = coefficients
         self.intercept_ = intercepts
         self.is_fitted_ = True
@@ -231,7 +232,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
                 classes_frequency.append(len(y_cluster[y_cluster == class_value]))
             self.leaf_classes_[i] = np.argmax(classes_frequency)
             if np.sum(classes_frequency) == 0:
-                self.leaf_class_probs_[i] = np.array(classes_frequency)
+                self.leaf_class_probs_[i] = 1/self.n_classes
             else:
                 self.leaf_class_probs_[i] = classes_frequency/np.sum(classes_frequency)
 
