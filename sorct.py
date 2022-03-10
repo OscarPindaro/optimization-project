@@ -518,16 +518,16 @@ class SORCT:
         self.model.alpha = alp
         return True
 
-    def solve(self):
+    def solve(self, exec_path, tee=False):
         """This method invokes the Ipopt solver
         
         Return:
             result (boolean) - solve function result
         
         """
-        solver = SolverFactory('ipopt', executable='C:/Users/antoc/Desktop/Ipopt-3.11.1-win64-intel13.1/bin/ipopt.exe')
-        results = solver.solve(self.model)  # ,tee=True show all the steps made by the solver
-        return results
+        solver = SolverFactory('ipopt', executable=exec_path, report_timing=True)
+        results = solver.solve(self.model, tee=tee)  # ,tee=True show all the steps made by the solver
+        return results, solver
 
     def value_obj(self):
         """ This method get Objective function value

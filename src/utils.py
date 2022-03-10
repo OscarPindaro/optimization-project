@@ -34,3 +34,11 @@ def extend_binary_decomposition(digits_list, n_digits):
     zeros = [0 for i in range(missing_digits)]
     zeros.extend(digits_list)
     return zeros
+
+def get_number_of_iterations(string):
+    index = string.find("Number of Iterations....: ")
+    n_chars = len("Number of Iterations....: ")
+    for i in range(index, len(string)):
+        if string[i] == "\n":
+            break
+    return int(string[index+n_chars:i])

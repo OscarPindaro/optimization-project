@@ -18,6 +18,7 @@ from sklearn import datasets
 from src.ORCTModel import ORCTModel, predicted_lab, accuracy
 from src.cluster import HierarchicalLogisticRegression, best_leaf_assignment
 from sorct import SORCT
+from src.utils import get_number_of_iterations
 
 
 def B_in_NR(model, i):
@@ -54,7 +55,8 @@ def I_k(model, i):
 if __name__ == "__main__":
     X, y = datasets.load_iris(as_frame=True, return_X_y=True)
     iris = pd.DataFrame(X)
-    iris["Species"] = y
+    iris.rename(columns={"Classes": "Classes"}, inplace=True)
+    iris["Classes"] = y
     # iris = iris.drop('Id', axis=1)
     iris_std = iris.copy()
     iris.head(5)
@@ -64,14 +66,13 @@ if __name__ == "__main__":
     index_features = list(range(0, len(iris_std.columns) - 1))
 
     # The name of the classes K
-    classes = iris_std['Species'].unique().tolist()
+    classes = iris_std['Classes'].unique().tolist()
     classes_en = [i for i in range(len(classes))]
-
     # Encoder processing
     le = preprocessing.LabelEncoder()
-    le.fit(iris_std['Species'])
+    le.fit(iris_std['Classes'])
 
-    iris_std['Species'] = le.transform(iris_std['Species'])
+    iris_std['Classes'] = le.transform(iris_std['Classes'])
 
     # Scaling phase
     iris_std[columns_names[0:4]] = scaler.fit_transform(iris_std[columns_names[0:4]])
@@ -98,7 +99,7 @@ if __name__ == "__main__":
 
     BF_in_NL_R = {4: [], 5: [2], 6: [1], 7: [1, 3]}
     BF_in_NL_L = {4: [1, 2], 5: [1], 6: [3], 7: []}
-    I_in_k = {i: list(df_train[df_train['Species'] == i].index) for i in range(len(classes))}
+    I_in_k = {i: list(df_train[df_train['Classes'] == i].index) for i in range(len(classes))}
     my_W = {(i, j): 0.5 if i != j else 0 for i in classes_en for j in classes_en}
     index_instances = list(X_train.index)
     my_x = {(i, j): df_train.loc[i][j] for i in index_instances for j in index_features}
@@ -118,6 +119,18 @@ if __name__ == "__main__":
     # (0,4) (0,5) (0,6) (0,7)
     # (1,4) ---
     init_c = {(i, j + 4): C[i, j] for i in classes_en for j in range(4)}
-
-    model = SORCT(dataset=X_train, I_in_k=I_in_k, I_k=I_k, )
-
+    model = SORCT(dataset=df_train, I_in_k=I_in_k, I_k=I_k)
+    model.set_init([init_a, init_mu, init_c, np.random.uniform(0, 1)])
+    model.createModel()
+    model.charge_of("simple")
+    ipopt_path = "~/miniconda3/envs/decision_trees/bin/ipopt"
+    import time
+    start = time.time()
+    results, solver = model.solve(ipopt_path, tee=True)
+    print("AAAAAAAAAAAAAAAA", time.time()-start)
+    print("Time", results.solver.time)
+    print("termination condition", results.solver.termination_condition)
+    assert_optimal_termination(results)
+    stringa = solver.__dict__["_log"]
+    print(get_number_of_iterations(stringa))
+    # model.model.display()
