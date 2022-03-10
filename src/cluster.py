@@ -206,6 +206,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
             else:
                 # TODO this may have some negative effects on precision with n_leaves greater than 4
                 classifier = FixedBinaryClassificator(value=np.unique(cl_filtered)[0], n_features=n_features)
+                classifier = classifier.fit(x_filtered, cl_filtered)
 
             # save the classifiers in the class
             trained_classifiers.append(classifier)
@@ -328,7 +329,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
 
     def get_ORCT_params(self, scale=512):
         a = np.stack(self.coef_).transpose() / 512
-        mu = np.stack(self.intercept_) / 512
+        mu = -np.stack(self.intercept_) / 512
         C = self.leaf_class_probs_.transpose()
         return {"a": a, "mu": mu, "C": C}
 
@@ -339,8 +340,21 @@ class FixedBinaryClassificator:
         if value != 0 and value != 1:
             raise ValueError("Value is not 0 or 1. Insted, value={}".format(value))
         self.value = value
-        self.coef_ = np.zeros((n_features,))
-        self.intercept_ = np.zeros(1)
+        self.coef_ = None
+        self.intercept_ = None
+
+    def fit(self, X, y):
+        min_max_f = {
+            0: np.min,
+            1: np.max
+        }
+        f = min_max_f[self.value]
+        n_features = X.shape[1]
+        last_features = n_features - 1
+        self.coef_ = np.zeros(n_features)
+        self.coef_[-1] = 1
+        self.intercept_ = np.ones(1)*f(X[-1])
+        return self
 
     def predict(self, X):
         return np.ones((X.shape[0],), dtype=int) * self.value

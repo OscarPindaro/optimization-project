@@ -544,7 +544,7 @@ class SORCT:
         Params:
             l_inf (float) - regularization therm for L infinity norm
             l_l1  (float) - regularization therm for L 1 norm
-            l_l2  (float) - regularization therm for L 2 norm
+            l_l2  (float) - regularization therprm for L 2 norm
             l_log  (float) - regularization therm for L 0 norm log approximation
             l_l0  (float) - regularization therm for L 0 norm approximation
             l0_Inf  (float) - regularization therm for L 0 inf norm approximation

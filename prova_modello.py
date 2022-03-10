@@ -119,15 +119,17 @@ if __name__ == "__main__":
     # (0,4) (0,5) (0,6) (0,7)
     # (1,4) ---
     init_c = {(i, j + 4): C[i, j] for i in classes_en for j in range(4)}
+    Pr = HLR.leaves_probabilities(X_train.to_numpy())
+    prob_df = pd.DataFrame(Pr, index=df_train.index)
+    print(prob_df)
+    #exit()
+    init_Pr = {(i, j+4): prob_df.loc[i][j] for i in index_instances for j in range(4)}
     model = SORCT(dataset=df_train, I_in_k=I_in_k, I_k=I_k)
-    model.set_init([init_a, init_mu, init_c, np.random.uniform(0, 1)])
+    model.set_init([init_a, init_mu, init_c, init_Pr])
     model.createModel()
     model.charge_of("simple")
     ipopt_path = "~/miniconda3/envs/decision_trees/bin/ipopt"
-    import time
-    start = time.time()
     results, solver = model.solve(ipopt_path, tee=True)
-    print("AAAAAAAAAAAAAAAA", time.time()-start)
     print("Time", results.solver.time)
     print("termination condition", results.solver.termination_condition)
     assert_optimal_termination(results)
