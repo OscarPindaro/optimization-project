@@ -119,13 +119,14 @@ def best_coupling(couples, remaining_clusters, estimated_labels, true_labels, me
 
 class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
     def __init__(self, n_classes=None, n_leaves=None, prediction_type="deterministic", random_state=None,
-                 logistic_params=None):
+                 logistic_params=None, random_empty=True):
         # parames
         self.n_classes = n_classes
         self.n_leaves = n_leaves
         self.prediction_type = prediction_type
         self.random_state = random_state
         self.logistic_params = logistic_params
+        self.random_empty = random_empty
         # fitted attributes
         self.is_fitted_ = False
         self.classifiers_ = None
@@ -134,6 +135,7 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         self.cluster_leaves_association_ = None
         self.coef_ = None
         self.intercept_ = None
+
 
     def fit(self, X, y, cluster_labels=None, leaves_assignment=None):
         """
@@ -231,11 +233,24 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
             classes_frequency = []
             for class_value in range(self.n_classes):
                 classes_frequency.append(len(y_cluster[y_cluster == class_value]))
-            self.leaf_classes_[i] = np.argmax(classes_frequency)
             if np.sum(classes_frequency) == 0:
-                self.leaf_class_probs_[i] = 1 / self.n_classes
+                if self.random_empty:
+                    self.leaf_class_probs_[i] = 1 / self.n_classes
+                else:
+                    self.leaf_class_probs_[i] = -1
             else:
                 self.leaf_class_probs_[i] = classes_frequency / np.sum(classes_frequency)
+
+        # correct -1 leaf_class_probs with adjacent leaf if not random empty
+        for i in range(self.n_leaves):
+            if not self.random_empty:
+                if -1 in self.leaf_class_probs_[i]:
+                    if i % 2 == 0:
+                        self.leaf_class_probs_[i] = self.leaf_class_probs_[i+1].copy()
+                    else:
+                        self.leaf_class_probs_[i] = self.leaf_class_probs_[i-1]
+            self.leaf_classes_[i] = np.argmax(self.leaf_class_probs_[i])
+
 
     def set_regressor_clusters(self, leaves_assignment):
         cluster_dimension = self.n_leaves // 2

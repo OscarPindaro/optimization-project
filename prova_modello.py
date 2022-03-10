@@ -81,14 +81,14 @@ if __name__ == "__main__":
 
     df = iris_std[columns_names[:-1]]
     y = iris_std[columns_names[4]]
-    X_train, X_test, y_train, y_test = train_test_split(df, y, test_size=0.25, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(df, y, test_size=0.25, random_state=2)
     df_train = pd.concat([X_train, y_train], axis=1)
     df_train.head(5)
 
     # training part
     n_leaves = 4
     HLR = HierarchicalLogisticRegression(n_classes=len(np.unique(y)), n_leaves=n_leaves, random_state=0,
-                                         logistic_params={"class_weight": "balanced"})
+                                         logistic_params={"class_weight": "balanced"}, random_empty=False)
     true_values = y_train
     ass, score = best_leaf_assignment(n_leaves, true_values, true_values, completeness_score)
     HLR = HLR.fit(X_train, y_train, true_values, ass)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     model = SORCT(dataset=df_train, I_in_k=I_in_k, I_k=I_k)
     model.set_init([init_a, init_mu, init_c, init_Pr])
     model.createModel()
-    opt_tipe = "both_l0"
+    opt_tipe = "simple"
     model.charge_of(opt_tipe)
     ipopt_path = "~/miniconda3/envs/decision_trees/bin/ipopt"
     results, solver = model.solve(ipopt_path)
