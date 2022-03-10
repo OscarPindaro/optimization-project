@@ -45,12 +45,12 @@ class ORCTModel:
         init_p = np.random.uniform(low=0.0, high=1.0, size=None)
 
         # The weigths of feature j-th in breanch node t-th
-        model.a = Var(model.f_s, model.N_B, within=Reals, initialize=init_a)
+        model.a = Var(model.f_s, model.N_B, within=Reals, bounds=(-1,1), initialize=init_a)
 
         # auxiliary variables for smooth version of global regularization
         model.beta = Var(model.f_s, within=PercentFraction, initialize=init_beta)
         # The intercepts of the linear combinations correspond to decision variables
-        model.mu = Var(model.N_B, within=Reals, initialize=init_mu)
+        model.mu = Var(model.N_B, within=Reals, bounds=(-1,1), initialize=init_mu)
 
         # The variables that take into account if node t is labeled with class k
         model.C = Var(model.K, model.N_L, within=PercentFraction, initialize=init_C)
@@ -100,7 +100,8 @@ class ORCTModel:
 def cost_rule(model):
     return sum(sum(
         sum(model.P[i, t] * sum(model.W[k, j] * model.C[j, t] for j in model.K if k != j) for t in model.N_L) for i in
-        model.I_k[k]) for k in model.K) + model.lam_glob * sum(model.beta[j] for j in model.f_s)
+        model.I_k[k]) for k in model.K)
+           #+ model.lam_glob * sum(model.beta[j] for j in model.f_s)
 
 
 # We must add the following set of constraints for making a single class prediction at each leaf node:

@@ -138,10 +138,10 @@ if __name__ == "__main__":
     HLR = HierarchicalLogisticRegression(n_classes=len(np.unique(y_train)), n_leaves=n_leaves,
                                          prediction_type="deterministic", random_state=0,
                                          logistic_params={"class_weight": "balanced"})
-                                                          # "penalty": "elasticnet",
-                                                          # "solver": "saga",
-                                                          # "l1_ratio": 0.9,
-                                                          # "fit_intercept": False})
+    # "penalty": "elasticnet",
+    # "solver": "saga",
+    # "l1_ratio": 0.9,
+    # "fit_intercept": False})
 
     # In[11]:
 
@@ -227,9 +227,9 @@ if __name__ == "__main__":
 
     # In[15]:
 
-    a = np.stack(HLR.coef_).transpose() /512
+    a = np.stack(HLR.coef_).transpose() / 512
     # mu = np.zeros_like(np.stack(HLR.intercept_))
-    mu=np.stack(HLR.intercept_) /512
+    mu = np.stack(HLR.intercept_) / 512
     C = HLR.leaf_class_probs_.transpose()
     # j+1 due to the convention for the branch nodes (numbered from 1)
     # it's in the form
@@ -256,7 +256,9 @@ if __name__ == "__main__":
     model.solve(ipopt_path)
     model.print_results()
     val = model.extraction_va()
-    print(val["a"])
     labels = predicted_lab(model.model, X_test, val, index_features)
     a = accuracy(y_test.to_numpy(), labels)
+
+    print("HLR accuracy:", HLR.score(X_test.to_numpy(), y_test))
     print("accuracy", a)
+

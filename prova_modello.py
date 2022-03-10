@@ -103,7 +103,7 @@ if __name__ == "__main__":
     my_x = {(i, j): df_train.loc[i][j] for i in index_instances for j in index_features}
 
     a = np.stack(HLR.coef_).transpose() / 512
-    mu = np.stack(HLR.intercept_) /512
+    mu = np.stack(HLR.intercept_) / 512
     C = HLR.leaf_class_probs_.transpose()
     # j+1 due to the convention for the branch nodes (numbered from 1)
     # it's in the form
@@ -145,6 +145,3 @@ if __name__ == "__main__":
     print("HLR=", HLR.score(X_test.to_numpy(), y_test.to_numpy()))
     print("ORCT=", a)
     print("ORCT no init", a_no_init)
-
-    print(val["a"])
-    print(val_no_init["a"])
