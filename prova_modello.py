@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     df = iris_std[columns_names[:-1]]
     y = iris_std[columns_names[4]]
-    X_train, X_test, y_train, y_test = train_test_split(df, y, test_size=0.25)
+    X_train, X_test, y_train, y_test = train_test_split(df, y, test_size=0.25, random_state=0)
     df_train = pd.concat([X_train, y_train], axis=1)
     df_train.head(5)
 
@@ -121,18 +121,40 @@ if __name__ == "__main__":
     init_c = {(i, j + 4): C[i, j] for i in classes_en for j in range(4)}
     Pr = HLR.leaves_probabilities(X_train.to_numpy())
     prob_df = pd.DataFrame(Pr, index=df_train.index)
+    print("a\n", a * 512)
+    print("mu\n", mu * 512)
     print(prob_df)
-    #exit()
-    init_Pr = {(i, j+4): prob_df.loc[i][j] for i in index_instances for j in range(4)}
+    init_Pr = {(i, j + 4): prob_df.loc[i][j] for i in index_instances for j in range(4)}
     model = SORCT(dataset=df_train, I_in_k=I_in_k, I_k=I_k)
     model.set_init([init_a, init_mu, init_c, init_Pr])
     model.createModel()
-    model.charge_of("simple")
+    opt_tipe = "both_l0"
+    model.charge_of(opt_tipe)
     ipopt_path = "~/miniconda3/envs/decision_trees/bin/ipopt"
-    results, solver = model.solve(ipopt_path, tee=True)
-    print("Time", results.solver.time)
-    print("termination condition", results.solver.termination_condition)
+    results, solver = model.solve(ipopt_path)
+    sorct_time = results.solver.time
+    sorct_term_cond = results.solver.termination_condition
     assert_optimal_termination(results)
     stringa = solver.__dict__["_log"]
-    print(get_number_of_iterations(stringa))
+    sorct_iters = get_number_of_iterations(stringa)
     # model.model.display()
+    model.extraction_va()
+
+    hlr_score = HLR.score(X_test.to_numpy(), y_test)
+    sorct_score = model.accuracy(model.predicted_lab(X_test), y_test)
+
+    model = SORCT(dataset=df_train, I_in_k=I_in_k, I_k=I_k)
+    model.createModel()
+    model.charge_of(opt_tipe)
+    results, solver = model.solve(ipopt_path)
+    model.extraction_va()
+    old_time = results.solver.time
+    old_cond = results.solver.termination_condition
+    assert_optimal_termination(results)
+    stringa = solver.__dict__["_log"]
+    old_iters = get_number_of_iterations(stringa)
+    old_sorct = model.accuracy(model.predicted_lab(X_test), y_test)
+
+    print("HLR = {}".format(hlr_score))
+    print("SORCT = {} -- n_iters = {} -- time = {}".format(sorct_score, sorct_iters, sorct_time))
+    print("OLD = {} -- n_iters = {} -- time = {}".format(old_sorct, old_iters, old_time))

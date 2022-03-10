@@ -270,9 +270,9 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         return self
 
     def predict(self, X):
-        if self.prediction_type is "deterministic":
+        if self.prediction_type == "deterministic":
             predictions = self.deterministic_predict(X)
-        elif self.prediction_type is "probabilistic":
+        elif self.prediction_type == "probabilistic":
             predictions = self.probabilistic_predict(X)
         else:
             raise ValueError("The value {} of parameter prediction_type is not admissible".format(self.prediction_type))
@@ -353,7 +353,9 @@ class FixedBinaryClassificator:
         last_features = n_features - 1
         self.coef_ = np.zeros(n_features)
         self.coef_[-1] = 1
-        self.intercept_ = np.ones(1)*f(X[-1])
+        self.intercept_ = np.ones(1) * f(X[-1])
+        self.coef_ = np.random.uniform(0, 1, (n_features,))
+        self.intercept_ = np.random.uniform(0, 1, (1,))
         return self
 
     def predict(self, X):
