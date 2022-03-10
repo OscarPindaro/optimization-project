@@ -36,14 +36,17 @@ class SORCT:
             - The values that labels asummed are encoded by integers
         
         """
-        # I_k is a method passed by the constructor to deal with pyomo syntax the objective function: given a class label the method returns the indeces of instances belonging to that class
+        # I_k is a method passed by the constructor to deal with pyomo syntax the objective function: given a class
+        # label the method returns the indeces of instances belonging to that class
         self.I_k = I_k
         # my_W is a dictionary, cost is a method defined in util1: it returns an dictionary of misclassification costs
         self.my_W = cost(dataset)
-        # I_in_k is a dictionary passed by the constructor to deal with pyomo syntax the objective function: the key of dictionary is the class labels the values are the indeces of instances belonging to that class
+        # I_in_k is a dictionary passed by the constructor to deal with pyomo syntax the objective function: the key
+        # of dictionary is the class labels the values are the indeces of instances belonging to that class
         self.I_in_k = I_in_k
-        # my_train is a function defined in util1 to deal with training set that returns a dictionary: the key is a pair of index of instance and index of features and the value is the value of of the feature fot that instance
-        # the input dataset must be a dataframe in pandas with all the column except for labels column
+        # my_train is a function defined in util1 to deal with training set that returns a dictionary: the key is a
+        # pair of index of instance and index of features and the value is the value of of the feature fot that
+        # instance the input dataset must be a dataframe in pandas with all the column except for labels column
         self.my_x = my_train(dataset)
 
         # list of classes in our dataset
@@ -524,7 +527,7 @@ class SORCT:
         """
         solver = SolverFactory('ipopt', executable='C:/Users/antoc/Desktop/Ipopt-3.11.1-win64-intel13.1/bin/ipopt.exe')
         results = solver.solve(self.model)  # ,tee=True show all the steps made by the solver
-        return True
+        return results
 
     def value_obj(self):
         """ This method get Objective function value

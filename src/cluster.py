@@ -232,9 +232,9 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
                 classes_frequency.append(len(y_cluster[y_cluster == class_value]))
             self.leaf_classes_[i] = np.argmax(classes_frequency)
             if np.sum(classes_frequency) == 0:
-                self.leaf_class_probs_[i] = 1/self.n_classes
+                self.leaf_class_probs_[i] = 1 / self.n_classes
             else:
-                self.leaf_class_probs_[i] = classes_frequency/np.sum(classes_frequency)
+                self.leaf_class_probs_[i] = classes_frequency / np.sum(classes_frequency)
 
     def set_regressor_clusters(self, leaves_assignment):
         cluster_dimension = self.n_leaves // 2
@@ -325,6 +325,12 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         # If we transpose this list, we get an array of shape (n_samples, n_leaves), and therefore each
         # row is the probability distribution of a given sample to fall in every leaf
         return np.array(leaves_probabilities).transpose()
+
+    def get_ORCT_params(self, scale=512):
+        a = np.stack(self.coef_).transpose() / 512
+        mu = np.stack(self.intercept_) / 512
+        C = self.leaf_class_probs_.transpose()
+        return {"a": a, "mu": mu, "C": C}
 
 
 class FixedBinaryClassificator:

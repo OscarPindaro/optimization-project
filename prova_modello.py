@@ -17,6 +17,7 @@ from sklearn import datasets
 
 from src.ORCTModel import ORCTModel, predicted_lab, accuracy
 from src.cluster import HierarchicalLogisticRegression, best_leaf_assignment
+from sorct import SORCT
 
 
 def B_in_NR(model, i):
@@ -102,9 +103,10 @@ if __name__ == "__main__":
     index_instances = list(X_train.index)
     my_x = {(i, j): df_train.loc[i][j] for i in index_instances for j in index_features}
 
-    a = np.stack(HLR.coef_).transpose() / 512
-    mu = np.stack(HLR.intercept_) / 512
-    C = HLR.leaf_class_probs_.transpose()
+    params = HLR.get_ORCT_params()
+    a = params["a"]
+    mu = params["mu"]
+    C = params["C"]
     # j+1 due to the convention for the branch nodes (numbered from 1)
     # it's in the form
     # (0,1) (0,2) (0,3)
@@ -117,31 +119,5 @@ if __name__ == "__main__":
     # (1,4) ---
     init_c = {(i, j + 4): C[i, j] for i in classes_en for j in range(4)}
 
-    model = ORCTModel(I_in_k=I_in_k, I_k_fun=I_k, index_features=index_features, BF_in_NL_R=BF_in_NL_R,
-                      B_in_NR=B_in_NR, B_in_NL=B_in_NL, error_weights=my_W, x_train=my_x, init_a=init_a,
-                      init_mu=init_mu, init_C=init_c)
+    model = SORCT(dataset=X_train, I_in_k=I_in_k, I_k=I_k, )
 
-    ipopt_path = "~/miniconda3/envs/decision_trees/bin/ipopt"
-    model.solve(ipopt_path)
-
-    val = model.extraction_va()
-
-    labels = predicted_lab(model.model, X_test, val, index_features)
-    a = accuracy(y_test.to_numpy(), labels)
-
-    init_a = np.random.uniform(0, 1, None)
-    init_c = np.random.uniform(0, 1, None)
-    init_mu = np.random.uniform(0, 1, None)
-    model_no_init = ORCTModel(I_in_k=I_in_k, I_k_fun=I_k, index_features=index_features, BF_in_NL_R=BF_in_NL_R,
-                              B_in_NR=B_in_NR, B_in_NL=B_in_NL, error_weights=my_W, x_train=my_x, init_a=init_a,
-                              init_mu=init_mu, init_C=init_c)
-    model_no_init.solve(ipopt_path)
-    val_no_init = model_no_init.extraction_va()
-    labels_no_init = predicted_lab(model_no_init.model, X_test, val_no_init, index_features)
-    a_no_init = accuracy(y_test.to_numpy(), labels_no_init)
-    print("\n\n\n")
-    model.print_results()
-    model_no_init.print_results()
-    print("HLR=", HLR.score(X_test.to_numpy(), y_test.to_numpy()))
-    print("ORCT=", a)
-    print("ORCT no init", a_no_init)
