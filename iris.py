@@ -18,6 +18,14 @@ from src.utils import get_number_of_iterations
 from sklearn.model_selection import KFold
 from src.cluster import find_best_estimator
 from pyomo.opt import SolverStatus, TerminationCondition
+import pickle
+
+
+def save_pickle(base_path, filename, object):
+    path = os.path.join(base_path, filename)
+    with open(path, "wb") as f:
+        pickle.dump(object, f)
+    print("Dumped object {} at path".format(object, path))
 
 
 def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, HLR=None, opt_tipe="simple",
@@ -78,7 +86,11 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, H
         sorct_time_f = -2
         sorct_iters_f = -2
         sorct_score_f = -2
+        print("results with unfeasible conditions")
+        print(results)
     else:
+        print("results in conditions not optimal nor infeasible ")
+        print(results)
         sorct_time_f = -3
         sorct_iters_f = -3
         sorct_score_f = -3
@@ -147,11 +159,11 @@ if __name__ == "__main__":
 
     import logging
 
-    logging.getLogger('pyomo.core').setLevel(logging.ERROR)
     ALL_START = time.time()
     N_SPLITS = 5
     OPT_TYPE = "simple"
     SEED = 1234
+    BASE_PATH = "results"
     np.random.random(SEED)
     TEE_VALUE = False
     dataset_name_list = ["new_thyroid"]
@@ -200,7 +212,7 @@ if __name__ == "__main__":
         # Scaling phase
         df_std[columns_names[0:-1]] = scaler.fit_transform(df_std[columns_names[0:-1]])
         for column in columns_names[0:-1]:
-            # TODO janky solution to unreliable MinMaxScaler behvaiour
+            # TODO janky solution to unreliable MinMaxScaler behaviour
             df_std.loc[df[column] > 1, column] = 1
             df_std.loc[df[column] < 0, column] = 0
 
@@ -259,6 +271,9 @@ if __name__ == "__main__":
             HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
             end = time.time()
             print("HLR time: {}".format(end - start))
+            hlr_filename = "HLR_tl_{}.pkl".format(fold_index)
+            save_pickle(base_path=BASE_PATH, filename=hlr_filename, object=HLR)
+
             if dataset_name == "new_thyroid" or dataset_name == "car":
                 HLR_score_tl = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
             else:
@@ -292,6 +307,9 @@ if __name__ == "__main__":
                 cl_start = time.time()
                 HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
                 cl_end = time.time()
+                # save cluster HLR
+                hlr_filename = "HLR_{}_{}.pkl".format(cluster_name, fold_index)
+                save_pickle(base_path=BASE_PATH, filename=hlr_filename, object=HLR)
                 HLR_score_cl = HLR.score(X_test.to_numpy(), y_test)
                 clustering_df.loc[cluster_name, "HLR_Time_{}".format(fold_index)] = cl_end - cl_start
                 clustering_df.loc[cluster_name, "HLR_Score_{}".format(fold_index)] = HLR_score_cl

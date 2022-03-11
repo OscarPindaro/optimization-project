@@ -527,6 +527,7 @@ class SORCT:
         """
         solver = SolverFactory('ipopt', executable=exec_path, report_timing=True)
         results = solver.solve(self.model, tee=tee)  # ,tee=True show all the steps made by the solver
+        self.results = results
         return results, solver
 
     def value_obj(self):
