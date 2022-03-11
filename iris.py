@@ -17,6 +17,8 @@ from src.cluster import HierarchicalLogisticRegression, best_leaf_assignment
 from src.utils import get_number_of_iterations
 from sklearn.model_selection import KFold
 from src.cluster import find_best_estimator
+from pyomo.opt import SolverStatus, TerminationCondition
+
 
 def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, HLR=None, opt_tipe="simple",
                  ipopt_path="~/miniconda3/envs/decision_trees/bin/ipopt", tee=False):
@@ -54,20 +56,33 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, H
         results, solver = model.solve(ipopt_path, tee=TEE_VALUE)
     except:
         return -1, -1, -1, None
-    sorct_time = results.solver.time
-    sorct_term_cond = results.solver.termination_condition
-    assert_optimal_termination(results)
-    stringa = solver.__dict__["_log"]
-    sorct_iters = get_number_of_iterations(stringa)
-    # model.model.display()
-    model.extraction_va()
-    pred_labels = model.predicted_lab(X_test)
-    if dataset_name == "new_thyroid":
-        sorct_score = balanced_accuracy_score(y_test, pred_labels)
+    sorct_time_f = None
+    sorct_iters_f = None
+    sorct_score_f = None
+    if (results.solver.status == SolverStatus.ok) and (
+            results.solver.termination_condition == TerminationCondition.optimal):
+        sorct_time_f = results.solver.time
+        sorct_term_cond = results.solver.termination_condition
+        # assert_optimal_termination(results)
+        stringa = solver.__dict__["_log"]
+        sorct_iters_f = get_number_of_iterations(stringa)
+        # model.model.display()
+        model.extraction_va()
+        pred_labels = model.predicted_lab(X_test)
+        if dataset_name == "new_thyroid":
+            sorct_score_f = balanced_accuracy_score(y_test, pred_labels)
+        else:
+            sorct_score_f = model.accuracy(y_test, pred_labels)
+    elif results.solver.termination_condition == TerminationCondition.infeasible:
+        sorct_time_f = -2
+        sorct_iters_f = -2
+        sorct_score_f = -2
     else:
-        sorct_score = model.accuracy(y_test, pred_labels)
+        sorct_time_f = -3
+        sorct_iters_f = -3
+        sorct_score_f = -3
 
-    return sorct_time, sorct_iters, sorct_score, sorct_term_cond
+    return sorct_time_f, sorct_iters_f, sorct_score_f, sorct_term_cond
 
 
 def fit_HLR(X_train, y_train, n_leaves=4, random_state=None, use_true_labels=True, estimator=None, balanced=False):
@@ -128,7 +143,6 @@ def create_clusters(n_leaves, SEED):
 
 
 if __name__ == "__main__":
-
 
     import logging
 
@@ -221,10 +235,10 @@ if __name__ == "__main__":
                 sample_weight[y_train == class_index] = n_occurr
             sample_weight = sample_weight / total_samples
 
-
             # test no init sorct
             sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
-                create_model(dataset_name,df_train, X_test, y_test, classes, random_init=True, opt_tipe=OPT_TYPE, tee=TEE_VALUE)
+                create_model(dataset_name, df_train, X_test, y_test, classes, random_init=True, opt_tipe=OPT_TYPE,
+                             tee=TEE_VALUE)
             sorct_df.loc["SORCT", "Time_{}".format(fold_index)] = sorct_time
             sorct_df.loc["SORCT", "Iterations_{}".format(fold_index)] = sorct_iters
 
@@ -237,7 +251,8 @@ if __name__ == "__main__":
             clustering_df.loc["True_labels", "HLR_Time_{}".format(fold_index)] = end - start
             clustering_df.loc["True_labels", "HLR_Score_{}".format(fold_index)] = HLR_score_tl
             sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
-                create_model(dataset_name, df_train, X_test, y_test, classes, tee=TEE_VALUE,random_init=False, HLR=HLR, opt_tipe=OPT_TYPE)
+                create_model(dataset_name, df_train, X_test, y_test, classes, tee=TEE_VALUE, random_init=False, HLR=HLR,
+                             opt_tipe=OPT_TYPE)
             clustering_df.loc["True_labels", "Time_{}".format(fold_index)] = sorct_time
             clustering_df.loc["True_labels", "Iterations_{}".format(fold_index)] = sorct_iters
             clustering_df.loc["True_labels", "SORCT_Score_{}".format(fold_index)] = sorct_score
@@ -246,7 +261,7 @@ if __name__ == "__main__":
             # clustering estimators
             clustering_estimators, names = create_clusters(n_leaves=4, SEED=SEED)
             for cl_idx in range(len(clustering_estimators)):
-            # for cl_idx in range(1):
+                # for cl_idx in range(1):
                 ce = clustering_estimators[cl_idx]
                 cluster_name = names[cl_idx]
                 try:
@@ -264,7 +279,8 @@ if __name__ == "__main__":
                 clustering_df.loc[cluster_name, "HLR_Time_{}".format(fold_index)] = cl_end - cl_start
                 clustering_df.loc[cluster_name, "HLR_Score_{}".format(fold_index)] = HLR_score_cl
                 sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
-                    create_model(dataset_name, df_train, X_test, y_test, classes, random_init=False, HLR=HLR, opt_tipe=OPT_TYPE, tee=TEE_VALUE)
+                    create_model(dataset_name, df_train, X_test, y_test, classes, random_init=False, HLR=HLR,
+                                 opt_tipe=OPT_TYPE, tee=TEE_VALUE)
                 clustering_df.loc[cluster_name, "Time_{}".format(fold_index)] = sorct_time
                 clustering_df.loc[cluster_name, "Iterations_{}".format(fold_index)] = sorct_iters
                 clustering_df.loc[cluster_name, "SORCT_Score_{}".format(fold_index)] = sorct_score
