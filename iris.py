@@ -153,7 +153,7 @@ if __name__ == "__main__":
     SEED = 1234
     np.random.random(SEED)
     TEE_VALUE = False
-    dataset_name_list = ["car", "iris", "new_thyroid", "seeds_data", "splice"]
+    dataset_name_list = ["seeds_data", "splice"]
     for dataset_name in dataset_name_list:
         print("Solving {}".format(dataset_name))
         if dataset_name == "iris":
@@ -252,7 +252,11 @@ if __name__ == "__main__":
             start = time.time()
             HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
             end = time.time()
-            HLR_score_tl = HLR.score(X_test.to_numpy(), y_test)
+            print("HLR time: {}".format(end-start))
+            if dataset_name == "new_thyroid":
+                sorct_score_f = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
+            else:
+                HLR_score_tl = HLR.score(X_test.to_numpy(), y_test)
             clustering_df.loc["True_labels", "HLR_Time_{}".format(fold_index)] = end - start
             clustering_df.loc["True_labels", "HLR_Score_{}".format(fold_index)] = HLR_score_tl
             sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
@@ -270,6 +274,7 @@ if __name__ == "__main__":
                 ce = clustering_estimators[cl_idx]
                 cluster_name = names[cl_idx]
                 print("Clustering alg  = {}".format(cluster_name))
+                start_cl = time.time()
                 try:
                     ce = ce.fit(X_train, sample_weight=sample_weight)
                 except:
@@ -290,6 +295,8 @@ if __name__ == "__main__":
                 clustering_df.loc[cluster_name, "Time_{}".format(fold_index)] = sorct_time
                 clustering_df.loc[cluster_name, "Iterations_{}".format(fold_index)] = sorct_iters
                 clustering_df.loc[cluster_name, "SORCT_Score_{}".format(fold_index)] = sorct_score
+                end_cl = time.time()
+                print("cl {} time: {}".format(cluster_name, end_cl-start_cl))
 
             fold_index += 1
 
