@@ -28,8 +28,8 @@ def save_pickle(base_path, filename, object):
     print("Dumped object {} at path".format(object, path))
 
 
-def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, HLR=None, opt_tipe="simple",
-                 ipopt_path="~/miniconda3/envs/decision_trees/bin/ipopt", tee=False):
+def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, base_path, filename,
+                 HLR=None, opt_tipe="simple",ipopt_path="~/miniconda3/envs/decision_trees/bin/ipopt", tee=False):
     I_in_k_in = {i: list(df_train[df_train['Classes'] == i].index) for i in range(len(classes))}
     index_instances = list(df_train.index)
     init_vals = []
@@ -64,13 +64,14 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, H
         # try catch for when max number of iteration is met
         results, solver = model.solve(ipopt_path, tee=TEE_VALUE)
     except:
+        save_pickle(base_path, filename, model)
         return -1, -1, -1, None
     sorct_time_f = None
     sorct_iters_f = None
     sorct_score_f = None
     sorct_term_cond = results.solver.termination_condition
-    if (results.solver.status == SolverStatus.ok) and (
-            results.solver.termination_condition == TerminationCondition.optimal):
+    if ((results.solver.status == SolverStatus.ok) and (
+            results.solver.termination_condition == TerminationCondition.optimal)):
         sorct_time_f = results.solver.time
         # assert_optimal_termination(results)
         stringa = solver.__dict__["_log"]
@@ -91,9 +92,23 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, H
     else:
         print("results in conditions not optimal nor infeasible ")
         print(results)
-        sorct_time_f = -3
-        sorct_iters_f = -3
-        sorct_score_f = -3
+        # TODO this is very very bad, im in a hurry
+        try:
+            sorct_time_f = results.solver.time
+            # assert_optimal_termination(results)
+            stringa = solver.__dict__["_log"]
+            sorct_iters_f = get_number_of_iterations(stringa)
+            # model.model.display()
+            model.extraction_va()
+            pred_labels = model.predicted_lab(X_test)
+            if dataset_name == "new_thyroid" or dataset_name == "car":
+                sorct_score_f = balanced_accuracy_score(y_test, pred_labels)
+            else:
+                sorct_score_f = model.accuracy(y_test, pred_labels)
+        except:
+            print("no idea why this is giving an exception")
+
+    save_pickle(base_path, filename, model)
 
     return sorct_time_f, sorct_iters_f, sorct_score_f, sorct_term_cond
 
