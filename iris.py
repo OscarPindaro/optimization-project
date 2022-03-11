@@ -59,10 +59,10 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, H
     sorct_time_f = None
     sorct_iters_f = None
     sorct_score_f = None
+    sorct_term_cond = results.solver.termination_condition
     if (results.solver.status == SolverStatus.ok) and (
             results.solver.termination_condition == TerminationCondition.optimal):
         sorct_time_f = results.solver.time
-        sorct_term_cond = results.solver.termination_condition
         # assert_optimal_termination(results)
         stringa = solver.__dict__["_log"]
         sorct_iters_f = get_number_of_iterations(stringa)
@@ -225,6 +225,7 @@ if __name__ == "__main__":
 
         fold_index = 0
         for train_index, test_index in kf.split(X, y):
+            print("Fold", folde_index)
             X_train, X_test = X.loc[train_index], X.loc[test_index]
             y_train, y_test = y[train_index], y[test_index]
             df_train = pd.concat([X_train, y_train], axis=1)
