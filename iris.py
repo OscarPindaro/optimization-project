@@ -18,29 +18,6 @@ from src.utils import get_number_of_iterations
 from sklearn.model_selection import KFold
 from src.cluster import find_best_estimator
 
-
-def B_in_NR(model, i):
-    if i == 4:
-        return []
-    elif i == 5:
-        return [2]
-    elif i == 6:
-        return [1]
-    elif i == 7:
-        return [1, 3]
-
-
-def B_in_NL(model, i):
-    if i == 4:
-        return [1, 2]
-    elif i == 5:
-        return [1]
-    elif i == 6:
-        return [3]
-    elif i == 7:
-        return []
-
-
 def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, HLR=None, opt_tipe="simple",
                  ipopt_path="~/miniconda3/envs/decision_trees/bin/ipopt", tee=False):
     I_in_k_in = {i: list(df_train[df_train['Classes'] == i].index) for i in range(len(classes))}
@@ -128,20 +105,20 @@ def create_clusters(n_leaves, SEED):
     clustering_estimators.append(agglomerate)
     names.append("Agglomerative_sigle")
 
-    params = dict(n_clusters=n_clusters, linkage="ward")
-    agglomerate = AgglomerativeClustering(**params)
-    clustering_estimators.append(agglomerate)
-    names.append("Agglomerative_ward")
-
-    params = dict(n_clusters=n_clusters, linkage="complete")
-    agglomerate = AgglomerativeClustering(**params)
-    clustering_estimators.append(agglomerate)
-    names.append("Agglomerative_complete")
-
-    params = dict(n_clusters=n_clusters, linkage="average")
-    agglomerate = AgglomerativeClustering(**params)
-    clustering_estimators.append(agglomerate)
-    names.append("Agglomerative_average")
+    # params = dict(n_clusters=n_clusters, linkage="ward")
+    # agglomerate = AgglomerativeClustering(**params)
+    # clustering_estimators.append(agglomerate)
+    # names.append("Agglomerative_ward")
+    #
+    # params = dict(n_clusters=n_clusters, linkage="complete")
+    # agglomerate = AgglomerativeClustering(**params)
+    # clustering_estimators.append(agglomerate)
+    # names.append("Agglomerative_complete")
+    #
+    # params = dict(n_clusters=n_clusters, linkage="average")
+    # agglomerate = AgglomerativeClustering(**params)
+    # clustering_estimators.append(agglomerate)
+    # names.append("Agglomerative_average")
 
     params = dict(n_clusters=n_clusters)
     birch = Birch(**params)
@@ -157,11 +134,11 @@ if __name__ == "__main__":
 
     logging.getLogger('pyomo.core').setLevel(logging.ERROR)
     ALL_START = time.time()
-    N_SPLITS = 2
+    N_SPLITS = 5
     OPT_TYPE = "simple"
     SEED = 1234
     np.random.random(SEED)
-    TEE_VALUE = True
+    TEE_VALUE = False
     dataset_name_list = ["car", "iris", "new_thyroid", "seeds_data", "splice"]
     for dataset_name in dataset_name_list:
         if dataset_name == "iris":
@@ -260,7 +237,7 @@ if __name__ == "__main__":
             clustering_df.loc["True_labels", "HLR_Time_{}".format(fold_index)] = end - start
             clustering_df.loc["True_labels", "HLR_Score_{}".format(fold_index)] = HLR_score_tl
             sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
-                create_model(dataset_name, df_train, X_test, y_test, classes, tee=True,random_init=False, HLR=HLR, opt_tipe=OPT_TYPE)
+                create_model(dataset_name, df_train, X_test, y_test, classes, tee=TEE_VALUE,random_init=False, HLR=HLR, opt_tipe=OPT_TYPE)
             clustering_df.loc["True_labels", "Time_{}".format(fold_index)] = sorct_time
             clustering_df.loc["True_labels", "Iterations_{}".format(fold_index)] = sorct_iters
             clustering_df.loc["True_labels", "SORCT_Score_{}".format(fold_index)] = sorct_score
@@ -268,8 +245,8 @@ if __name__ == "__main__":
             clustering_df.loc["True_labels", "Completeness_{}".format(fold_index)] = 1
             # clustering estimators
             clustering_estimators, names = create_clusters(n_leaves=4, SEED=SEED)
-            # for cl_idx in range(len(clustering_estimators)):
-            for cl_idx in range(1):
+            for cl_idx in range(len(clustering_estimators)):
+            # for cl_idx in range(1):
                 ce = clustering_estimators[cl_idx]
                 cluster_name = names[cl_idx]
                 try:
