@@ -199,8 +199,8 @@ if __name__ == "__main__":
         df_std[columns_names[0:-1]] = scaler.fit_transform(df_std[columns_names[0:-1]])
         for column in columns_names[0:-1]:
             # TODO janky solution to unreliable MinMaxScaler behvaiour
-            df[column][df[column] >1] = 1
-            df[column][df[column] < 0] = 0
+            df_std.loc[df[column] > 1, column] = 1
+            df_std.loc[df[column] < 0, column] = 0
 
         X = df_std[columns_names[:-1]]
         y = df_std[columns_names[-1]]
@@ -256,7 +256,7 @@ if __name__ == "__main__":
             start = time.time()
             HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
             end = time.time()
-            print("HLR time: {}".format(end-start))
+            print("HLR time: {}".format(end - start))
             if dataset_name == "new_thyroid":
                 sorct_score_f = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
             else:
@@ -300,7 +300,7 @@ if __name__ == "__main__":
                 clustering_df.loc[cluster_name, "Iterations_{}".format(fold_index)] = sorct_iters
                 clustering_df.loc[cluster_name, "SORCT_Score_{}".format(fold_index)] = sorct_score
                 end_cl = time.time()
-                print("cl {} time: {}".format(cluster_name, end_cl-start_cl))
+                print("cl {} time: {}".format(cluster_name, end_cl - start_cl))
 
             fold_index += 1
 
