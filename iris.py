@@ -31,7 +31,8 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, H
     if random_init:
         assert HLR is None
     if not random_init:
-        params = HLR.get_ORCT_params()
+        n_features = len(df_train.columns[0:-1])
+        params = HLR.get_ORCT_params(n_features)
         a = params["a"]
         mu = params["mu"]
         C = params["C"]
@@ -69,7 +70,7 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, H
         # model.model.display()
         model.extraction_va()
         pred_labels = model.predicted_lab(X_test)
-        if dataset_name == "new_thyroid":
+        if dataset_name == "new_thyroid" or dataset_name == "car":
             sorct_score_f = balanced_accuracy_score(y_test, pred_labels)
         else:
             sorct_score_f = model.accuracy(y_test, pred_labels)
@@ -258,7 +259,7 @@ if __name__ == "__main__":
             HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
             end = time.time()
             print("HLR time: {}".format(end - start))
-            if dataset_name == "new_thyroid":
+            if dataset_name == "new_thyroid" or dataset_name == "car":
                 HLR_score_tl = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
             else:
                 HLR_score_tl = HLR.score(X_test.to_numpy(), y_test)

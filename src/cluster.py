@@ -342,8 +342,8 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         # row is the probability distribution of a given sample to fall in every leaf
         return np.array(leaves_probabilities).transpose()
 
-    def get_ORCT_params(self, scale=512):
-        a = np.stack(self.coef_).transpose() / 512
+    def get_ORCT_params(self, n_features, scale=512):
+        a = np.stack(self.coef_).transpose()*n_features / 512
         mu = -np.stack(self.intercept_) / 512
         C = self.leaf_class_probs_.transpose()
         return {"a": a, "mu": mu, "C": C}
