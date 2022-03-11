@@ -181,7 +181,7 @@ if __name__ == "__main__":
     BASE_PATH = "results"
     np.random.random(SEED)
     TEE_VALUE = False
-    dataset_name_list = ["new_thyroid"]
+    dataset_name_list = ["car", "iris","new_thyroid", "seeds_data", "splice"]
     print("TESTO ", dataset_name_list)
     for dataset_name in dataset_name_list:
         print("Solving {}".format(dataset_name))
