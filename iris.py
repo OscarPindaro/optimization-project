@@ -199,8 +199,8 @@ if __name__ == "__main__":
         df_std[columns_names[0:-1]] = scaler.fit_transform(df_std[columns_names[0:-1]])
         for column in columns_names[0:-1]:
             # TODO janky solution to unreliable MinMaxScaler behvaiour
-            df[column][df[column > 1]] = 1
-            df[column][df[column < 0]] = 0
+            df[column][df[column] >1] = 1
+            df[column][df[column] < 0] = 0
 
         X = df_std[columns_names[:-1]]
         y = df_std[columns_names[-1]]
