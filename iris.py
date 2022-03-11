@@ -225,7 +225,7 @@ if __name__ == "__main__":
 
         fold_index = 0
         for train_index, test_index in kf.split(X, y):
-            print("Fold", folde_index)
+            print("Fold", folder_index)
             X_train, X_test = X.loc[train_index], X.loc[test_index]
             y_train, y_test = y[train_index], y[test_index]
             df_train = pd.concat([X_train, y_train], axis=1)
