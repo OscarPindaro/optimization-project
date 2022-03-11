@@ -153,7 +153,8 @@ if __name__ == "__main__":
     SEED = 1234
     np.random.random(SEED)
     TEE_VALUE = False
-    dataset_name_list = ["seeds_data", "splice"]
+    dataset_name_list = ["new_thyroid"]
+    print("TESTO ", dataset_name_list)
     for dataset_name in dataset_name_list:
         print("Solving {}".format(dataset_name))
         if dataset_name == "iris":
@@ -258,7 +259,7 @@ if __name__ == "__main__":
             end = time.time()
             print("HLR time: {}".format(end - start))
             if dataset_name == "new_thyroid":
-                sorct_score_f = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
+                HLR_score_tl = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
             else:
                 HLR_score_tl = HLR.score(X_test.to_numpy(), y_test)
             clustering_df.loc["True_labels", "HLR_Time_{}".format(fold_index)] = end - start
