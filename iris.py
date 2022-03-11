@@ -273,9 +273,10 @@ if __name__ == "__main__":
 
             # test no init sorct
             print("SORCT without initialization")
+            filename = "SORCT_no_init_{}.pkl".format(fold_index)
             sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, random_init=True, opt_tipe=OPT_TYPE,
-                             tee=TEE_VALUE)
+                             tee=TEE_VALUE, base_path=BASE_PATH, filename=filename)
             sorct_df.loc["SORCT", "Time_{}".format(fold_index)] = sorct_time
             sorct_df.loc["SORCT", "Iterations_{}".format(fold_index)] = sorct_iters
 
@@ -328,9 +329,10 @@ if __name__ == "__main__":
                 HLR_score_cl = HLR.score(X_test.to_numpy(), y_test)
                 clustering_df.loc[cluster_name, "HLR_Time_{}".format(fold_index)] = cl_end - cl_start
                 clustering_df.loc[cluster_name, "HLR_Score_{}".format(fold_index)] = HLR_score_cl
+                filename = "SORCT_{}_{}.pkl".format(cluster_name, fold_index)
                 sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
                     create_model(dataset_name, df_train, X_test, y_test, classes, random_init=False, HLR=HLR,
-                                 opt_tipe=OPT_TYPE, tee=TEE_VALUE)
+                                 opt_tipe=OPT_TYPE, tee=TEE_VALUE, base_path=BASE_PATH, filename=filename)
                 clustering_df.loc[cluster_name, "Time_{}".format(fold_index)] = sorct_time
                 clustering_df.loc[cluster_name, "Iterations_{}".format(fold_index)] = sorct_iters
                 clustering_df.loc[cluster_name, "SORCT_Score_{}".format(fold_index)] = sorct_score
