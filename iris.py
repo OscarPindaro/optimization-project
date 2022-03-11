@@ -155,6 +155,7 @@ if __name__ == "__main__":
     TEE_VALUE = False
     dataset_name_list = ["car", "iris", "new_thyroid", "seeds_data", "splice"]
     for dataset_name in dataset_name_list:
+        print("Solving {}".format(dataset_name))
         if dataset_name == "iris":
             X, y = datasets.load_iris(as_frame=True, return_X_y=True)
             df = pd.DataFrame(X)
@@ -205,6 +206,7 @@ if __name__ == "__main__":
         _, names = create_clusters(4, SEED)
         names.append("True_labels")
         df_columns = []
+        print("Number of folds = {}".format(N_SPLITS))
         for col_idx in range(N_SPLITS):
             df_columns.append("Time_{}".format(col_idx))
             df_columns.append("HLR_Time_{}".format(col_idx))
@@ -227,7 +229,7 @@ if __name__ == "__main__":
             y_train, y_test = y[train_index], y[test_index]
             df_train = pd.concat([X_train, y_train], axis=1)
             df_test = pd.concat([X_test, y_test], axis=1)
-            # sample weighting
+            # sample weightingsorct_iters
             occurences = [len(y_train[y_train == x]) for x in classes]
             total_samples = sum(occurences)
             sample_weight = np.zeros_like(y_train)
@@ -236,6 +238,7 @@ if __name__ == "__main__":
             sample_weight = sample_weight / total_samples
 
             # test no init sorct
+            print("SORCT without initialization")
             sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, random_init=True, opt_tipe=OPT_TYPE,
                              tee=TEE_VALUE)
@@ -244,6 +247,7 @@ if __name__ == "__main__":
 
             sorct_df.loc["SORCT", "Score_{}".format(fold_index)] = sorct_score
             # true label performances
+            print("HLR")
             start = time.time()
             HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
             end = time.time()
@@ -264,6 +268,7 @@ if __name__ == "__main__":
                 # for cl_idx in range(1):
                 ce = clustering_estimators[cl_idx]
                 cluster_name = names[cl_idx]
+                print("Clustering alg  = {}".format(cluster_name))
                 try:
                     ce = ce.fit(X_train, sample_weight=sample_weight)
                 except:
@@ -291,5 +296,6 @@ if __name__ == "__main__":
         print(sorct_df)
         clustering_df.to_csv("results/{}_results.csv".format(dataset_name), sep=" ")
         sorct_df.to_csv("results/{}_sorct.csv".format(dataset_name), sep=" ")
+        print()
     ALL_END = time.time()
     print("Time elapsed: {}".format(ALL_END - ALL_START))
