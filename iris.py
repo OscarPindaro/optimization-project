@@ -21,11 +21,27 @@ from pyomo.opt import SolverStatus, TerminationCondition
 import pickle
 
 
-def save_pickle(base_path, filename, object):
+def save_HLR(base_path, filename, HLR, X):
+    import json
+    path = os.path.join(base_path, filename)
+    n_features = len(X.columns)
+    to_save = HLR.get_ORCT_params(n_features)
+    probs = HLR.leaves_probabilities(X.to_numpy())
+    to_save["Pr"] = probs
+    # for key in to_save:
+    #     to_save[key] = to_save[key].tolist()
+
+    with open(path, "wb") as k:
+        lista = list(to_save.items())
+        pickle.dump(to_save, k)
+
+def save_model(base_path, filename, model):
+    model.extraction_va()
+    vars = model.var
+    vars["index_features"] = model.index_instances
     path = os.path.join(base_path, filename)
     with open(path, "wb") as f:
-        pickle.dump(object, f)
-    print("Dumped object {} at path".format(object, path))
+        pickle.dump(vars, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, base_path, filename,
@@ -64,7 +80,7 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
         # try catch for when max number of iteration is met
         results, solver = model.solve(ipopt_path, tee=TEE_VALUE)
     except:
-        save_pickle(base_path, filename, model)
+        save_model(base_path, filename, model)
         return -1, -1, -1, None
     sorct_time_f = None
     sorct_iters_f = None
@@ -108,7 +124,7 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
         except:
             print("no idea why this is giving an exception")
 
-    save_pickle(base_path, filename, model)
+    save_model(base_path, filename, model)
 
     return sorct_time_f, sorct_iters_f, sorct_score_f, sorct_term_cond
 
@@ -273,7 +289,7 @@ if __name__ == "__main__":
 
             # test no init sorct
             print("SORCT without initialization")
-            filename = "SORCT_no_init_{}.pkl".format(fold_index)
+            filename = "SORCT_no_init__{}_{}.pkl".format(dataset_name,fold_index)
             sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, random_init=True, opt_tipe=OPT_TYPE,
                              tee=TEE_VALUE, base_path=BASE_PATH, filename=filename)
@@ -287,8 +303,8 @@ if __name__ == "__main__":
             HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
             end = time.time()
             print("HLR time: {}".format(end - start))
-            hlr_filename = "HLR_tl_{}.pkl".format(fold_index)
-            save_pickle(base_path=BASE_PATH, filename=hlr_filename, object=HLR)
+            hlr_filename = "HLR_tl_{}_{}.pkl".format(dataset_name, fold_index)
+            save_HLR(base_path=BASE_PATH, filename=hlr_filename, HLR=HLR, X=X_train)
 
             if dataset_name == "new_thyroid" or dataset_name == "car":
                 HLR_score_tl = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
@@ -296,9 +312,10 @@ if __name__ == "__main__":
                 HLR_score_tl = HLR.score(X_test.to_numpy(), y_test)
             clustering_df.loc["True_labels", "HLR_Time_{}".format(fold_index)] = end - start
             clustering_df.loc["True_labels", "HLR_Score_{}".format(fold_index)] = HLR_score_tl
+            filename ="SORCT_tl_{}_{}.pkl".format(dataset_name, fold_index)
             sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, tee=TEE_VALUE, random_init=False, HLR=HLR,
-                             opt_tipe=OPT_TYPE)
+                             opt_tipe=OPT_TYPE, base_path=BASE_PATH, filename=filename)
             clustering_df.loc["True_labels", "Time_{}".format(fold_index)] = sorct_time
             clustering_df.loc["True_labels", "Iterations_{}".format(fold_index)] = sorct_iters
             clustering_df.loc["True_labels", "SORCT_Score_{}".format(fold_index)] = sorct_score
@@ -324,12 +341,12 @@ if __name__ == "__main__":
                 HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
                 cl_end = time.time()
                 # save cluster HLR
-                hlr_filename = "HLR_{}_{}.pkl".format(cluster_name, fold_index)
-                save_pickle(base_path=BASE_PATH, filename=hlr_filename, object=HLR)
+                hlr_filename = "HLR_{}_{}_{}.pkl".format(dataset_name, cluster_name, fold_index)
+                save_HLR(base_path=BASE_PATH, filename=hlr_filename, HLR=HLR, X=X_train)
                 HLR_score_cl = HLR.score(X_test.to_numpy(), y_test)
                 clustering_df.loc[cluster_name, "HLR_Time_{}".format(fold_index)] = cl_end - cl_start
                 clustering_df.loc[cluster_name, "HLR_Score_{}".format(fold_index)] = HLR_score_cl
-                filename = "SORCT_{}_{}.pkl".format(cluster_name, fold_index)
+                filename = "SORCT_{}_{}_{}.pkl".format(dataset_name, cluster_name, fold_index)
                 sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
                     create_model(dataset_name, df_train, X_test, y_test, classes, random_init=False, HLR=HLR,
                                  opt_tipe=OPT_TYPE, tee=TEE_VALUE, base_path=BASE_PATH, filename=filename)
