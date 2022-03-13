@@ -314,7 +314,7 @@ if __name__ == "__main__":
             sorct_df.loc["SORCT", "Iterations_{}".format(fold_index)] = sorct_iters
 
             sorct_df.loc["SORCT", "Score_{}".format(fold_index)] = sorct_score
-            sorct_df.loc["SORCT", "Score_Train{}".format(fold_index)] = train_sorct_score
+            sorct_df.loc["SORCT", "Score_Train_{}".format(fold_index)] = train_sorct_score
             # true label performances
             print("HLR")
             start = time.time()
@@ -323,13 +323,15 @@ if __name__ == "__main__":
             print("HLR time: {}".format(end - start))
             hlr_filename = "HLR_tl_{}_{}.pkl".format(dataset_name, fold_index)
             save_HLR(base_path=BASE_PATH, filename=hlr_filename, HLR=HLR, X=X_train)
-
             if dataset_name == "new_thyroid" or dataset_name == "car":
                 HLR_score_tl = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
+                train_HLR_score_tl = balanced_accuracy_score(y_train, HLR.predict(X_train.to_numpy()))
             else:
                 HLR_score_tl = HLR.score(X_test.to_numpy(), y_test)
+                train_HLR_score_tl = HLR.score(X_train.to_numpy(), y_train)
             clustering_df.loc["True_labels", "HLR_Time_{}".format(fold_index)] = end - start
             clustering_df.loc["True_labels", "HLR_Score_{}".format(fold_index)] = HLR_score_tl
+            clustering_df.loc["True_labels", "HLR_Score_Train_{}".format(fold_index)] = train_HLR_score_tl
             filename ="SORCT_tl_{}_{}.pkl".format(dataset_name, fold_index)
             sorct_time, sorct_iters, sorct_score, sorct_term_cond, train_sorct_score = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, tee=TEE_VALUE, random_init=False, HLR=HLR,
@@ -364,7 +366,7 @@ if __name__ == "__main__":
                 save_HLR(base_path=BASE_PATH, filename=hlr_filename, HLR=HLR, X=X_train)
                 if dataset_name == "new_thyroid" or dataset_name == "car":
                     HLR_score_cl = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
-                    train_HLR_score_cl = balanced_accuracy_score(y_train, X_train.predict(X_test.to_numpy()))
+                    train_HLR_score_cl = balanced_accuracy_score(y_train, HLR.predict(X_train.to_numpy()))
                 else:
                     HLR_score_cl = HLR.score(X_test.to_numpy(), y_test)
                     train_HLR_score_cl = HLR.score(X_train.to_numpy(), y_train)
