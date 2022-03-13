@@ -214,7 +214,7 @@ if __name__ == "__main__":
     BASE_PATH = "results"
     np.random.random(SEED)
     TEE_VALUE = False
-    dataset_name_list = ["car", "iris","new_thyroid", "seeds_data", "splice"]
+    dataset_name_list = ["iris", "car","new_thyroid", "seeds_data", "splice"]
     print("TESTO ", dataset_name_list)
     for dataset_name in dataset_name_list:
         print("Solving {}".format(dataset_name))
@@ -307,13 +307,14 @@ if __name__ == "__main__":
             # test no init sorct
             print("SORCT without initialization")
             filename = "SORCT_no_init__{}_{}.pkl".format(dataset_name,fold_index)
-            sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
+            sorct_time, sorct_iters, sorct_score, sorct_term_cond, train_sorct_score = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, random_init=True, opt_tipe=OPT_TYPE,
                              tee=TEE_VALUE, base_path=BASE_PATH, filename=filename)
             sorct_df.loc["SORCT", "Time_{}".format(fold_index)] = sorct_time
             sorct_df.loc["SORCT", "Iterations_{}".format(fold_index)] = sorct_iters
 
             sorct_df.loc["SORCT", "Score_{}".format(fold_index)] = sorct_score
+            sorct_df.loc["SORCT", "Score_Train{}".format(fold_index)] = train_sorct_score
             # true label performances
             print("HLR")
             start = time.time()
