@@ -198,15 +198,13 @@ if __name__ == "__main__":
 
         # SAVE RESULTS
         df_filename = "result_train_{}.csv".format(dataset_name)
-        df_index = X.index
-        df_index = df_index.append("True_labels")
-        result_df = pd.DataFrame(index=df_index)
+        result_df = pd.DataFrame(index=clusters_names)
         for cl_name in result_df.index:
             result_df.loc[cl_name, "HLR_Score"] = np.mean(hlr_clusters_scores[cl_name])
             result_df.loc[cl_name, "SORCT_Score"] = np.mean(sorct_cl_scores[cl_name])
         result_df.loc["True_labels", "HLR_Score"] = np.mean(hlr_clusters_scores["True_labels"])
         result_df.loc["True_labels", "SORCT_Score"] = np.mean(sorct_cl_scores["True_labels"])
-        result_df.loc["SORCT", "SORCT_Score" ] = np.mean(sorct_no_init_score)
+        result_df.loc["SORCT", "SORCT_Score"] = np.mean(sorct_no_init_score)
         res_path = os.path.join("results", df_filename)
         print(result_df)
         result_df.to_csv(res_path, sep=" ")
