@@ -306,7 +306,7 @@ if __name__ == "__main__":
                 sample_weight[y_train == class_index] = n_occurr
             sample_weight = sample_weight / total_samples
 
-            # test no init sorct
+            # ************** SORCT no init **************
             print("SORCT without initialization")
             filename = "SORCT_no_init__{}_{}.pkl".format(dataset_name,fold_index)
             sorct_time, sorct_iters, sorct_score, sorct_term_cond, train_sorct_score = \
@@ -317,7 +317,7 @@ if __name__ == "__main__":
 
             sorct_df.loc["SORCT", "Score_{}".format(fold_index)] = sorct_score
             sorct_df.loc["SORCT", "Score_Train_{}".format(fold_index)] = train_sorct_score
-            # true label performances
+            # ************** HLR true labels *********************+
             print("HLR")
             start = time.time()
             HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
@@ -334,6 +334,7 @@ if __name__ == "__main__":
             clustering_df.loc["True_labels", "HLR_Time_{}".format(fold_index)] = end - start
             clustering_df.loc["True_labels", "HLR_Score_{}".format(fold_index)] = HLR_score_tl
             clustering_df.loc["True_labels", "HLR_Score_Train_{}".format(fold_index)] = train_HLR_score_tl
+            # ************ SORCT tl
             filename ="SORCT_tl_{}_{}.pkl".format(dataset_name, fold_index)
             sorct_time, sorct_iters, sorct_score, sorct_term_cond, train_sorct_score = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, tee=TEE_VALUE, random_init=False, HLR=HLR,
@@ -344,7 +345,7 @@ if __name__ == "__main__":
             clustering_df.loc["True_labels", "Homogeneity_{}".format(fold_index)] = 1
             clustering_df.loc["True_labels", "Completeness_{}".format(fold_index)] = 1
             clustering_df.loc["True_labels", "SORCT_Score_Train_{}".format(fold_index)] = train_sorct_score
-            # clustering estimators
+            # ******** CLUSTERING ESTIMATORS **********
             clustering_estimators, names = create_clusters(n_leaves=4, SEED=SEED)
             for cl_idx in range(len(clustering_estimators)):
                 # for cl_idx in range(1):
@@ -361,7 +362,8 @@ if __name__ == "__main__":
                 clustering_df.loc[cluster_name, "Homogeneity_{}".format(fold_index)] = hs
                 clustering_df.loc[cluster_name, "Completeness_{}".format(fold_index)] = cs
                 cl_start = time.time()
-                HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=True, balanced=True)
+                HLR = fit_HLR(X_train, y_train, n_leaves=4, random_state=SEED, use_true_labels=False,
+                              estimator=ce, balanced=True)
                 cl_end = time.time()
                 # save cluster HLR
                 hlr_filename = "HLR_{}_{}_{}.pkl".format(dataset_name, cluster_name, fold_index)
@@ -372,7 +374,6 @@ if __name__ == "__main__":
                 else:
                     HLR_score_cl = HLR.score(X_test.to_numpy(), y_test)
                     train_HLR_score_cl = HLR.score(X_train.to_numpy(), y_train)
-
 
                 clustering_df.loc[cluster_name, "HLR_Time_{}".format(fold_index)] = cl_end - cl_start
                 clustering_df.loc[cluster_name, "HLR_Score_{}".format(fold_index)] = HLR_score_cl
