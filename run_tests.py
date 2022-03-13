@@ -79,7 +79,8 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
     try:
         # try catch for when max number of iteration is met
         results, solver = model.solve(ipopt_path, tee=TEE_VALUE)
-    except:
+    except Exception as e:
+        print("errore nel solve, eccezione:\n", e)
         save_model(base_path, filename, model)
         return -1, -1, -1, None
     sorct_time_f = None
