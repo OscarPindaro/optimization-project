@@ -83,7 +83,7 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
     except Exception as e:
         print("errore nel solve, eccezione:\n", e)
         save_model(base_path, filename, model)
-        return -1, -1, -1, None
+        return -1, -1, -1, None, 0
     sorct_time_f = None
     sorct_iters_f = None
     sorct_score_f = None
