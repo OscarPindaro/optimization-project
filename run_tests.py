@@ -83,7 +83,7 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
     except Exception as e:
         print("errore nel solve, eccezione:\n", e)
         save_model(base_path, filename, model)
-        return -1, -1, -1, None, 0
+        return -1, -1, -1, None, -1
     sorct_time_f = None
     sorct_iters_f = None
     sorct_score_f = None
@@ -159,7 +159,7 @@ def fit_HLR(X_train, y_train, n_leaves=4, random_state=None, use_true_labels=Tru
         assert estimator is not None
         labels = estimator.labels_
     HLR = HierarchicalLogisticRegression(n_classes=len(np.unique(y_train)), n_leaves=n_leaves,
-                                         prediction_type="deterministic", random_state=SEED,
+                                         prediction_type="deterministic", random_state=random_state,
                                          logistic_params=logistic_params)
     assignment, score = best_leaf_assignment(n_leaves=n_leaves, estimated_labels=labels,
                                              true_labels=y_train, metric=completeness_score)
