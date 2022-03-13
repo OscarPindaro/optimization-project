@@ -204,6 +204,8 @@ if __name__ == "__main__":
         for cl_name in result_df.index:
             result_df.loc[cl_name, "HLR_Score"] = np.mean(hlr_clusters_scores[cl_name])
             result_df.loc[cl_name, "SORCT_Score"] = np.mean(sorct_cl_scores[cl_name])
+        result_df.loc["True_labels", "HLR_Score"] = np.mean(hlr_clusters_scores["True_labels"])
+        result_df.loc["True_labels", "SORCT_Score"] = np.mean(sorct_cl_scores["True_labels"])
         result_df.loc["SORCT", "SORCT_Score" ] = np.mean(sorct_no_init_score)
         res_path = os.path.join("results", df_filename)
         print(result_df)
