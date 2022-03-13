@@ -38,8 +38,8 @@ def get_model_init(dictionary, index_features, index_sample, classes_en):
     return [init_a, init_mu, init_c, init_pr]
 
 
-def create_model(init, opt_tipe, df_train):
-    I_in_k = {i: list(df_train[df_train['Classes'] == i].index) for i in range(len(classes))}
+def create_model(init, opt_tipe, df_train, classes_en):
+    I_in_k = {i: list(df_train[df_train['Classes'] == i].index) for i in range(len(classes_en))}
     model = SORCT(dataset=df_train, I_in_k=I_in_k, I_k=I_in_k)
     model.createModel()
     model.charge_of(opt_tipe)
@@ -57,6 +57,70 @@ def predict(model , X, y, dataset_name):
     return sorct_score_f
 
 if __name__ == "__main__":
+    # dataset_name = "splice"
+    # dataset_path = os.path.join("datasets", "{}.csv".format(dataset_name))
+    # df = pd.read_csv(dataset_path, delimiter=";", header=0)
+    # df = df.convert_dtypes()
+    # # dictionary converting ordinal categories to values
+    # if dataset_name == "car":
+    #     cost_dict = {"low": 0, "med": 1, "high": 2, "vhigh": 3}
+    #     doors_dict = {"2": 2, "3": 3, "4": 4, "5more": 5}
+    #     persons_dict = {"2": 2, "4": 4, "more": 5}
+    #     dimension_dict = {"small": 0, "med": 1, "big": 2}
+    #     # buying
+    #     df["buying"] = df["buying"].apply(lambda x: cost_dict[x])
+    #     df["maint"] = df["maint"].apply(lambda x: cost_dict[x])
+    #     df["doors"] = df["doors"].apply(lambda x: doors_dict[x])
+    #     df["persons"] = df["persons"].apply(lambda x: persons_dict[x])
+    #     df["lug_boot"] = df["lug_boot"].apply(lambda x: dimension_dict[x])
+    #     df["safety"] = df["safety"].apply(lambda x: cost_dict[x])
+    #     classes_encoder = preprocessing.LabelEncoder().fit(df["Classes"])
+    #     df["Classes"] = classes_encoder.transform(df["Classes"])
+    # N_SPLITS = 5
+    # SEED = 1234
+    # n_feature = len(df.columns) - 1
+    # kf = KFold(n_splits=N_SPLITS, shuffle=True, random_state=SEED)
+    #
+    # scaler = MinMaxScaler()  # also MaxAbsScaler()
+    # # Preprocessing: we get the columns names of features which have to be standardized
+    # columns_names = list(df)
+    # index_features = list(range(0, len(df.columns) - 1))
+    # # The name of the classes K
+    # classes = df['Classes'].unique().tolist()
+    # classes_en = [i for i in range(len(classes))]
+    # # Encoder processing
+    # le = preprocessing.LabelEncoder()
+    # le.fit(df['Classes'])
+    # df['Classes'] = le.transform(df['Classes'])
+    # # Scaling phase
+    # df[columns_names[0:-1]] = scaler.fit_transform(df[columns_names[0:-1]])
+    # for column in columns_names[0:-1]:
+    #     # TODO janky solution to unreliable MinMaxScaler behaviour
+    #     df.loc[df[column] > 1, column] = 1
+    #     df.loc[df[column] < 0, column] = 0
+    # X = df[df.columns[0:n_feature]]
+    # y = df["Classes"]
+    #
+    # for train_index, test_index in kf.split(X, y):
+    #     X_train, X_test = X.loc[train_index], X.loc[test_index]
+    #     y_train, y_test = y[train_index], y[test_index]
+    #     df_train = pd.concat([X_train, y_train], axis=1)
+    #     df_test = pd.concat([X_test, y_test], axis=1)
+    #     train_index = df_train.index
+    #     break
+    # filename = "HLR_tl_{}_0.pkl".format(dataset_name)
+    # with open(os.path.join("results", filename), "rb") as f:
+    #     hlr_dict = pickle.load(f)
+    # OPT_TYPE = "simple"
+    # init = get_model_init(hlr_dict, index_features, train_index, classes_en)
+    # model = create_model(init, OPT_TYPE, df_train, classes_en)
+    # hlr_score = predict(model, X_train, y_train, dataset_name)
+    # print(hlr_score)
+    # exit()
+
+
+
+
     dataset_name_list = ["car", "iris", "new_thyroid", "seeds_data", "splice"]
     N_SPLITS = 5
     OPT_TYPE = "simple"
@@ -145,7 +209,7 @@ if __name__ == "__main__":
             with open(os.path.join("results", filename), "rb") as f:
                 hlr_dict = pickle.load(f)
             hlr_init = get_model_init(hlr_dict, index_features, train_index, classes_en)
-            model = create_model(hlr_init, OPT_TYPE, df_train)
+            model = create_model(hlr_init, OPT_TYPE, df_train, classes_en)
             hlr_score = predict(model, X_train, y_train, dataset_name)
             hlr_clusters_scores["True_labels"].append(hlr_score)
             # HLR_car_Agglomerative_sigle_0.pkl
@@ -156,7 +220,7 @@ if __name__ == "__main__":
                     cluster_hl_params = pickle.load(f)
 
                 cluster_init = get_model_init(cluster_hl_params, index_features, train_index, classes_en)
-                model = create_model(cluster_init, OPT_TYPE, df_train)
+                model = create_model(cluster_init, OPT_TYPE, df_train, classes_en)
                 cluster_score = predict(model, X_train, y_train, dataset_name)
                 hlr_clusters_scores[cl_name].append(cluster_score)
             #*********** END HLR ********************
@@ -167,7 +231,7 @@ if __name__ == "__main__":
             with open(os.path.join("results", filename), "rb") as f:
                 sorct_params = pickle.load(f)
             sorct_init_vals = [sorct_params["a"], sorct_params["mu"], sorct_params["C"], sorct_params["P"]]
-            model = create_model(sorct_init_vals, OPT_TYPE, df_train)
+            model = create_model(sorct_init_vals, OPT_TYPE, df_train, classes_en)
             sorct_no_init_score = predict(model, X_train, y_train, dataset_name)
             sorct_no_init_scores.append(sorct_no_init_score)
             # *********** END SORCT no init **********
@@ -180,7 +244,7 @@ if __name__ == "__main__":
                 sorct_tl_params = pickle.load(f)
 
             tl_sorct_init = [sorct_tl_params["a"], sorct_tl_params["mu"], sorct_tl_params["C"], sorct_tl_params["P"]]
-            model = create_model(tl_sorct_init, OPT_TYPE, df_train)
+            model = create_model(tl_sorct_init, OPT_TYPE, df_train, classes_en)
             sorct_tl_score = predict(model, X_train, y_train, dataset_name)
             sorct_cl_scores["True_labels"].append(sorct_tl_score)
 
@@ -190,7 +254,7 @@ if __name__ == "__main__":
                 with open(os.path.join("results", filename), "rb") as f:
                     cl_sorct_params = pickle.load(f)
                 cl_sorct_int = [cl_sorct_params["a"], cl_sorct_params["mu"], cl_sorct_params["C"], cl_sorct_params["P"]]
-                model = create_model(cl_sorct_int, OPT_TYPE, df_train)
+                model = create_model(cl_sorct_int, OPT_TYPE, df_train, classes_en)
                 sorct_cl_score = predict(model, X_train, y_train, dataset_name)
                 sorct_cl_scores[cl_name].append(sorct_cl_score)
             # END SORCT CLUSTERING

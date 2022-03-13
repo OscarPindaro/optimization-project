@@ -45,7 +45,8 @@ def save_model(base_path, filename, model):
 
 
 def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, base_path, filename,
-                 HLR=None, opt_tipe="simple",ipopt_path="~/miniconda3/envs/decision_trees/bin/ipopt", tee=False):
+                 HLR=None, opt_tipe="simple",ipopt_path="~/miniconda3/envs/decision_trees/bin/ipopt", tee=False,
+                 X_train=None, y_train=None):
     I_in_k_in = {i: list(df_train[df_train['Classes'] == i].index) for i in range(len(classes))}
     index_instances = list(df_train.index)
     init_vals = []
@@ -100,6 +101,12 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
             sorct_score_f = balanced_accuracy_score(y_test, pred_labels)
         else:
             sorct_score_f = model.accuracy(y_test, pred_labels)
+        if X_train is not None:
+            train_pred_labels = model.predicted_lab(X_train)
+            if dataset_name == "new_thyroid" or dataset_name == "car":
+                train_sorct_score_f = balanced_accuracy_score(y_train, pred_labels)
+            else:
+                train_sorct_score_f = model.accuracy(y_train, pred_labels)
     elif results.solver.termination_condition == TerminationCondition.infeasible:
         sorct_time_f = -2
         sorct_iters_f = -2
@@ -122,12 +129,21 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
                 sorct_score_f = balanced_accuracy_score(y_test, pred_labels)
             else:
                 sorct_score_f = model.accuracy(y_test, pred_labels)
+
+            if X_train is not None:
+                train_pred_labels = model.predicted_lab(X_train)
+                if dataset_name == "new_thyroid" or dataset_name == "car":
+                    train_sorct_score_f = balanced_accuracy_score(y_train, pred_labels)
+                else:
+                    train_sorct_score_f = model.accuracy(y_train, pred_labels)
         except:
             print("no idea why this is giving an exception")
 
     save_model(base_path, filename, model)
-
-    return sorct_time_f, sorct_iters_f, sorct_score_f, sorct_term_cond
+    if X_train is None:
+        return sorct_time_f, sorct_iters_f, sorct_score_f, sorct_term_cond, 0
+    else:
+        return sorct_time_f, sorct_iters_f, sorct_score_f, sorct_term_cond, train_sorct_score_f
 
 
 def fit_HLR(X_train, y_train, n_leaves=4, random_state=None, use_true_labels=True, estimator=None, balanced=False):
@@ -314,7 +330,7 @@ if __name__ == "__main__":
             clustering_df.loc["True_labels", "HLR_Time_{}".format(fold_index)] = end - start
             clustering_df.loc["True_labels", "HLR_Score_{}".format(fold_index)] = HLR_score_tl
             filename ="SORCT_tl_{}_{}.pkl".format(dataset_name, fold_index)
-            sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
+            sorct_time, sorct_iters, sorct_score, sorct_term_cond, train_sorct_score = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, tee=TEE_VALUE, random_init=False, HLR=HLR,
                              opt_tipe=OPT_TYPE, base_path=BASE_PATH, filename=filename)
             clustering_df.loc["True_labels", "Time_{}".format(fold_index)] = sorct_time
@@ -322,6 +338,7 @@ if __name__ == "__main__":
             clustering_df.loc["True_labels", "SORCT_Score_{}".format(fold_index)] = sorct_score
             clustering_df.loc["True_labels", "Homogeneity_{}".format(fold_index)] = 1
             clustering_df.loc["True_labels", "Completeness_{}".format(fold_index)] = 1
+            clustering_df.loc["True_labels", "SORCT_Score_Train_{}".format(fold_index)] = train_sorct_score
             # clustering estimators
             clustering_estimators, names = create_clusters(n_leaves=4, SEED=SEED)
             for cl_idx in range(len(clustering_estimators)):
@@ -344,16 +361,25 @@ if __name__ == "__main__":
                 # save cluster HLR
                 hlr_filename = "HLR_{}_{}_{}.pkl".format(dataset_name, cluster_name, fold_index)
                 save_HLR(base_path=BASE_PATH, filename=hlr_filename, HLR=HLR, X=X_train)
-                HLR_score_cl = HLR.score(X_test.to_numpy(), y_test)
+                if dataset_name == "new_thyroid" or dataset_name == "car":
+                    HLR_score_cl = balanced_accuracy_score(y_test, HLR.predict(X_test.to_numpy()))
+                    train_HLR_score_cl = balanced_accuracy_score(y_train, X_train.predict(X_test.to_numpy()))
+                else:
+                    HLR_score_cl = HLR.score(X_test.to_numpy(), y_test)
+                    train_HLR_score_cl = HLR.score(X_train.to_numpy(), y_train)
+
+
                 clustering_df.loc[cluster_name, "HLR_Time_{}".format(fold_index)] = cl_end - cl_start
                 clustering_df.loc[cluster_name, "HLR_Score_{}".format(fold_index)] = HLR_score_cl
+                clustering_df.loc[cluster_name, "HLR_Score_Train_{}".format(fold_index)] = train_HLR_score_cl
                 filename = "SORCT_{}_{}_{}.pkl".format(dataset_name, cluster_name, fold_index)
-                sorct_time, sorct_iters, sorct_score, sorct_term_cond = \
+                sorct_time, sorct_iters, sorct_score, sorct_term_cond, train_sorct_score = \
                     create_model(dataset_name, df_train, X_test, y_test, classes, random_init=False, HLR=HLR,
                                  opt_tipe=OPT_TYPE, tee=TEE_VALUE, base_path=BASE_PATH, filename=filename)
                 clustering_df.loc[cluster_name, "Time_{}".format(fold_index)] = sorct_time
                 clustering_df.loc[cluster_name, "Iterations_{}".format(fold_index)] = sorct_iters
                 clustering_df.loc[cluster_name, "SORCT_Score_{}".format(fold_index)] = sorct_score
+                clustering_df.loc[cluster_name, "SORCT_Score_Train_{}".format(fold_index)] = train_sorct_score
                 end_cl = time.time()
                 print("cl {} time: {}".format(cluster_name, end_cl - start_cl))
 

@@ -343,8 +343,8 @@ class HierarchicalLogisticRegression(BaseEstimator, ClassifierMixin):
         return np.array(leaves_probabilities).transpose()
 
     def get_ORCT_params(self, n_features, scale=512):
-        a = np.stack(self.coef_).transpose()*n_features / 512
-        mu = -np.stack(self.intercept_) / 512
+        a = np.stack(self.coef_).transpose()*n_features / scale
+        mu = -np.stack(self.intercept_) / scale
         C = self.leaf_class_probs_.transpose()
         return {"a": a, "mu": mu, "C": C}
 
