@@ -136,8 +136,9 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
                     train_sorct_score_f = balanced_accuracy_score(y_train, pred_labels)
                 else:
                     train_sorct_score_f = model.accuracy(y_train, pred_labels)
-        except:
-            print("no idea why this is giving an exception")
+        except Exception as e:
+            print("no idea why this is giving an exception", e)
+            return -4, -4, -4, -4, -4
 
     save_model(base_path, filename, model)
     if X_train is None:
