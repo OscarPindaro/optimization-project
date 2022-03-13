@@ -309,7 +309,7 @@ if __name__ == "__main__":
             filename = "SORCT_no_init__{}_{}.pkl".format(dataset_name,fold_index)
             sorct_time, sorct_iters, sorct_score, sorct_term_cond, train_sorct_score = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, random_init=True, opt_tipe=OPT_TYPE,
-                             tee=TEE_VALUE, base_path=BASE_PATH, filename=filename)
+                             tee=TEE_VALUE, base_path=BASE_PATH, filename=filename, X_train=X_train, y_train=y_train)
             sorct_df.loc["SORCT", "Time_{}".format(fold_index)] = sorct_time
             sorct_df.loc["SORCT", "Iterations_{}".format(fold_index)] = sorct_iters
 
@@ -333,7 +333,7 @@ if __name__ == "__main__":
             filename ="SORCT_tl_{}_{}.pkl".format(dataset_name, fold_index)
             sorct_time, sorct_iters, sorct_score, sorct_term_cond, train_sorct_score = \
                 create_model(dataset_name, df_train, X_test, y_test, classes, tee=TEE_VALUE, random_init=False, HLR=HLR,
-                             opt_tipe=OPT_TYPE, base_path=BASE_PATH, filename=filename)
+                             opt_tipe=OPT_TYPE, base_path=BASE_PATH, filename=filename,X_train=X_train, y_train=y_train)
             clustering_df.loc["True_labels", "Time_{}".format(fold_index)] = sorct_time
             clustering_df.loc["True_labels", "Iterations_{}".format(fold_index)] = sorct_iters
             clustering_df.loc["True_labels", "SORCT_Score_{}".format(fold_index)] = sorct_score
@@ -376,7 +376,8 @@ if __name__ == "__main__":
                 filename = "SORCT_{}_{}_{}.pkl".format(dataset_name, cluster_name, fold_index)
                 sorct_time, sorct_iters, sorct_score, sorct_term_cond, train_sorct_score = \
                     create_model(dataset_name, df_train, X_test, y_test, classes, random_init=False, HLR=HLR,
-                                 opt_tipe=OPT_TYPE, tee=TEE_VALUE, base_path=BASE_PATH, filename=filename)
+                                 opt_tipe=OPT_TYPE, tee=TEE_VALUE, base_path=BASE_PATH, filename=filename,
+                                 X_train=X_train, y_train=y_train)
                 clustering_df.loc[cluster_name, "Time_{}".format(fold_index)] = sorct_time
                 clustering_df.loc[cluster_name, "Iterations_{}".format(fold_index)] = sorct_iters
                 clustering_df.loc[cluster_name, "SORCT_Score_{}".format(fold_index)] = sorct_score
