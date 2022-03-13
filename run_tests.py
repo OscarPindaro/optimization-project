@@ -104,9 +104,9 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
         if X_train is not None:
             train_pred_labels = model.predicted_lab(X_train)
             if dataset_name == "new_thyroid" or dataset_name == "car":
-                train_sorct_score_f = balanced_accuracy_score(y_train, pred_labels)
+                train_sorct_score_f = balanced_accuracy_score(y_train, train_pred_labels)
             else:
-                train_sorct_score_f = model.accuracy(y_train, pred_labels)
+                train_sorct_score_f = model.accuracy(y_train, train_pred_labels)
     elif results.solver.termination_condition == TerminationCondition.infeasible:
         sorct_time_f = -2
         sorct_iters_f = -2
