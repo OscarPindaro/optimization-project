@@ -29,7 +29,7 @@ from pyomo.opt import SolverFactory
 if __name__ == "__main__":
     SEED = 1
     name = "seeds_data.csv"
-    DATASET_PATH = os.path.join("datasets", name)
+    DATASET_PATH = os.path.join("../datasets", name)
     df = pd.read_csv(DATASET_PATH, delimiter=";", header=0)
     le = preprocessing.LabelEncoder()
     le.fit(df['Classes'])

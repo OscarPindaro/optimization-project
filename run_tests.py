@@ -78,10 +78,9 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
         init_vals.extend([init_a, init_mu, init_c, init_Pr])
         model.set_init(init_vals)
     try:
-        # try catch for when max number of iteration is met
         results, solver = model.solve(ipopt_path, tee=TEE_VALUE)
     except Exception as e:
-        print("errore nel solve, eccezione:\n", e)
+        print("ERRORE nel solve, caso -1, eccezione:\n", e)
         save_model(base_path, filename, model)
         return -1, -1, -1, None, -1
     sorct_time_f = None
@@ -107,14 +106,21 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
                 train_sorct_score_f = balanced_accuracy_score(y_train, train_pred_labels)
             else:
                 train_sorct_score_f = model.accuracy(y_train, train_pred_labels)
+        if sorct_iters_f < 30:
+            print("CAVOLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
+            print(sorct_score_f, train_sorct_score_f )
+            print(results)
+            print("\n\n\n\n")
     elif results.solver.termination_condition == TerminationCondition.infeasible:
         sorct_time_f = -2
         sorct_iters_f = -2
         sorct_score_f = -2
-        print("results with unfeasible conditions")
+        print()
+        print("results with UNFEASBILE conditions")
         print(results)
     else:
-        print("results in conditions not optimal nor infeasible ")
+        print()
+        print("NEITHER OPTIMAL NOR INFEASIBLE")
         print(results)
         # TODO this is very very bad, im in a hurry
         try:
@@ -137,6 +143,8 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
                     train_sorct_score_f = balanced_accuracy_score(y_train, train_pred_labels)
                 else:
                     train_sorct_score_f = model.accuracy(y_train, train_pred_labels)
+
+                print(train_sorct_score_f)
         except Exception as e:
             print("no idea why this is giving an exception", e)
             return -4, -4, -4, -4, -4
@@ -209,6 +217,10 @@ if __name__ == "__main__":
 
     import logging
 
+    import logging
+
+    logging.getLogger('pyomo.core').setLevel(logging.ERROR)
+
     ALL_START = time.time()
     N_SPLITS = 5
     OPT_TYPE = "simple"
@@ -216,7 +228,7 @@ if __name__ == "__main__":
     BASE_PATH = "results"
     np.random.random(SEED)
     TEE_VALUE = False
-    dataset_name_list = ["iris", "car","new_thyroid", "seeds_data", "splice"]
+    dataset_name_list = ["iris"] # , "car","new_thyroid", "seeds_data", "splice"]
     print("TESTO ", dataset_name_list)
     for dataset_name in dataset_name_list:
         print("Solving {}".format(dataset_name))

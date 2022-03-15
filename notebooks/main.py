@@ -11,7 +11,7 @@ from sklearn.model_selection import train_test_split
 from src.cluster import find_best_estimator, best_leaf_assignment, HierarchicalLogisticRegression
 
 if __name__ == "__main__":
-    DATASET_PATH = os.path.join("datasets", "car.csv")
+    DATASET_PATH = os.path.join("../datasets", "car.csv")
     names = ["buying", "maint", "doors", "persons", "lug_boot", "safety", "Classes"]
     car = pd.read_csv(DATASET_PATH, delimiter=";", header=0, names=names)
     car = car.convert_dtypes()
