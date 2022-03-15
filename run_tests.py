@@ -107,7 +107,6 @@ def create_model(dataset_name, df_train, X_test, y_test, classes, random_init, b
             else:
                 train_sorct_score_f = model.accuracy(y_train, train_pred_labels)
         if sorct_iters_f < 30:
-            print("CAVOLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO")
             print(sorct_score_f, train_sorct_score_f )
             print(results)
             print("\n\n\n\n")

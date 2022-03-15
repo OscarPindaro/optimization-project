@@ -1,6 +1,0 @@
-,Time,Iterations,HLR_Score,SORCT_Score,Homogeneity,Completeness,Invalid Folds
-kmeans,140.63,893.00,0.72,0.55,0.12,0.07,2.00
-Agglomerative_sigle,134.51,551.60,0.70,0.56,0.16,0.09,0.00
-birch,103.02,637.40,0.70,0.58,0.14,0.09,0.00
-True_labels,154.35,934.20,0.75,0.51,1.00,1.00,0.00
-SORCT,132.08,632.40,,0.59,,,0.00

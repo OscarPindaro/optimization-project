@@ -10,6 +10,9 @@ from pyomo.opt import SolverFactory
 
 
 class ORCTModel:
+    """
+    This was a class done by copying the content of a notebook of the orignal code base i was studying.
+    """
 
     def __init__(self, I_in_k, I_k_fun, index_features, BF_in_NL_R, B_in_NR, B_in_NL, error_weights, x_train,
                  init_a, init_mu, init_C):
